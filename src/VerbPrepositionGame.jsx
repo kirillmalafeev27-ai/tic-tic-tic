@@ -1,56 +1,94 @@
 import React, { useState, useRef } from 'react';
 import { RotateCcw, User, Users, GripVertical } from 'lucide-react';
 
-// 30 German nouns, A0.1 level, 10 per gender
-const ALL_WORDS = [
-  // der (masculine) - 10 words
-  { word: 'Hund', gender: 'der', translation: 'dog' },
-  { word: 'Mann', gender: 'der', translation: 'man' },
-  { word: 'Tisch', gender: 'der', translation: 'table' },
-  { word: 'Stuhl', gender: 'der', translation: 'chair' },
-  { word: 'Apfel', gender: 'der', translation: 'apple' },
-  { word: 'Ball', gender: 'der', translation: 'ball' },
-  { word: 'Tag', gender: 'der', translation: 'day' },
-  { word: 'Schuh', gender: 'der', translation: 'shoe' },
-  { word: 'Baum', gender: 'der', translation: 'tree' },
-  { word: 'Fisch', gender: 'der', translation: 'fish' },
-  // die (feminine) - 10 words
-  { word: 'Katze', gender: 'die', translation: 'cat' },
-  { word: 'Frau', gender: 'die', translation: 'woman' },
-  { word: 'Blume', gender: 'die', translation: 'flower' },
-  { word: 'Lampe', gender: 'die', translation: 'lamp' },
-  { word: 'Milch', gender: 'die', translation: 'milk' },
-  { word: 'Tasse', gender: 'die', translation: 'cup' },
-  { word: 'Uhr', gender: 'die', translation: 'clock' },
-  { word: 'Nase', gender: 'die', translation: 'nose' },
-  { word: 'Sonne', gender: 'die', translation: 'sun' },
-  { word: 'Tasche', gender: 'die', translation: 'bag' },
-  // das (neuter) - 10 words
-  { word: 'Buch', gender: 'das', translation: 'book' },
-  { word: 'Kind', gender: 'das', translation: 'child' },
-  { word: 'Haus', gender: 'das', translation: 'house' },
-  { word: 'Bett', gender: 'das', translation: 'bed' },
-  { word: 'Bild', gender: 'das', translation: 'picture' },
-  { word: 'Auto', gender: 'das', translation: 'car' },
-  { word: 'Glas', gender: 'das', translation: 'glass' },
-  { word: 'Brot', gender: 'das', translation: 'bread' },
-  { word: 'Ei', gender: 'das', translation: 'egg' },
-  { word: 'Tier', gender: 'das', translation: 'animal' },
+// 7 unique prepositions for columns
+const COLUMN_PREPOSITIONS = ['an', 'über', 'von', 'für', 'mit', 'auf', 'nach'];
+
+// 50 German verbs with their required prepositions
+const ALL_VERBS = [
+  // an (Akk/Dat) - ~7
+  { verb: 'sich erinnern', preposition: 'an', example: 'sich erinnern an', translation: 'to remember' },
+  { verb: 'denken', preposition: 'an', example: 'denken an', translation: 'to think of' },
+  { verb: 'glauben', preposition: 'an', example: 'glauben an', translation: 'to believe in' },
+  { verb: 'teilnehmen', preposition: 'an', example: 'teilnehmen an', translation: 'to participate in' },
+  { verb: 'sich gewöhnen', preposition: 'an', example: 'sich gewöhnen an', translation: 'to get used to' },
+  { verb: 'sich wenden', preposition: 'an', example: 'sich wenden an', translation: 'to turn to' },
+  { verb: 'zweifeln', preposition: 'an', example: 'zweifeln an', translation: 'to doubt' },
+
+  // über (Akk) - ~7
+  { verb: 'sich ärgern', preposition: 'über', example: 'sich ärgern über', translation: 'to be annoyed about' },
+  { verb: 'sprechen', preposition: 'über', example: 'sprechen über', translation: 'to speak about' },
+  { verb: 'sich freuen', preposition: 'über', example: 'sich freuen über', translation: 'to be happy about' },
+  { verb: 'nachdenken', preposition: 'über', example: 'nachdenken über', translation: 'to think about' },
+  { verb: 'sich beschweren', preposition: 'über', example: 'sich beschweren über', translation: 'to complain about' },
+  { verb: 'diskutieren', preposition: 'über', example: 'diskutieren über', translation: 'to discuss' },
+  { verb: 'lachen', preposition: 'über', example: 'lachen über', translation: 'to laugh about' },
+
+  // von (Dat) - ~7
+  { verb: 'träumen', preposition: 'von', example: 'träumen von', translation: 'to dream of' },
+  { verb: 'erzählen', preposition: 'von', example: 'erzählen von', translation: 'to tell about' },
+  { verb: 'abhängen', preposition: 'von', example: 'abhängen von', translation: 'to depend on' },
+  { verb: 'sich erholen', preposition: 'von', example: 'sich erholen von', translation: 'to recover from' },
+  { verb: 'sich verabschieden', preposition: 'von', example: 'sich verabschieden von', translation: 'to say goodbye to' },
+  { verb: 'profitieren', preposition: 'von', example: 'profitieren von', translation: 'to profit from' },
+  { verb: 'handeln', preposition: 'von', example: 'handeln von', translation: 'to be about' },
+
+  // für (Akk) - ~7
+  { verb: 'sich interessieren', preposition: 'für', example: 'sich interessieren für', translation: 'to be interested in' },
+  { verb: 'sorgen', preposition: 'für', example: 'sorgen für', translation: 'to take care of' },
+  { verb: 'sich entscheiden', preposition: 'für', example: 'sich entscheiden für', translation: 'to decide for' },
+  { verb: 'danken', preposition: 'für', example: 'danken für', translation: 'to thank for' },
+  { verb: 'sich entschuldigen', preposition: 'für', example: 'sich entschuldigen für', translation: 'to apologize for' },
+  { verb: 'kämpfen', preposition: 'für', example: 'kämpfen für', translation: 'to fight for' },
+  { verb: 'sich begeistern', preposition: 'für', example: 'sich begeistern für', translation: 'to be enthusiastic about' },
+
+  // mit (Dat) - ~7
+  { verb: 'anfangen', preposition: 'mit', example: 'anfangen mit', translation: 'to begin with' },
+  { verb: 'aufhören', preposition: 'mit', example: 'aufhören mit', translation: 'to stop' },
+  { verb: 'sich beschäftigen', preposition: 'mit', example: 'sich beschäftigen mit', translation: 'to deal with' },
+  { verb: 'rechnen', preposition: 'mit', example: 'rechnen mit', translation: 'to count on' },
+  { verb: 'sich unterhalten', preposition: 'mit', example: 'sich unterhalten mit', translation: 'to talk with' },
+  { verb: 'vergleichen', preposition: 'mit', example: 'vergleichen mit', translation: 'to compare with' },
+  { verb: 'zusammenhängen', preposition: 'mit', example: 'zusammenhängen mit', translation: 'to be connected with' },
+
+  // auf (Akk) - ~8
+  { verb: 'warten', preposition: 'auf', example: 'warten auf', translation: 'to wait for' },
+  { verb: 'sich freuen', preposition: 'auf', example: 'sich freuen auf', translation: 'to look forward to' },
+  { verb: 'achten', preposition: 'auf', example: 'achten auf', translation: 'to pay attention to' },
+  { verb: 'sich vorbereiten', preposition: 'auf', example: 'sich vorbereiten auf', translation: 'to prepare for' },
+  { verb: 'sich verlassen', preposition: 'auf', example: 'sich verlassen auf', translation: 'to rely on' },
+  { verb: 'verzichten', preposition: 'auf', example: 'verzichten auf', translation: 'to give up' },
+  { verb: 'sich konzentrieren', preposition: 'auf', example: 'sich konzentrieren auf', translation: 'to concentrate on' },
+  { verb: 'ankommen', preposition: 'auf', example: 'ankommen auf', translation: 'to depend on' },
+
+  // nach (Dat) - ~7
+  { verb: 'fragen', preposition: 'nach', example: 'fragen nach', translation: 'to ask about' },
+  { verb: 'sich sehnen', preposition: 'nach', example: 'sich sehnen nach', translation: 'to long for' },
+  { verb: 'suchen', preposition: 'nach', example: 'suchen nach', translation: 'to search for' },
+  { verb: 'riechen', preposition: 'nach', example: 'riechen nach', translation: 'to smell of' },
+  { verb: 'schmecken', preposition: 'nach', example: 'schmecken nach', translation: 'to taste of' },
+  { verb: 'sich erkundigen', preposition: 'nach', example: 'sich erkundigen nach', translation: 'to inquire about' },
+  { verb: 'streben', preposition: 'nach', example: 'streben nach', translation: 'to strive for' },
 ];
 
-// Column genders: der, die, das, der, die, das, der
-const COLUMN_GENDERS = ['der', 'die', 'das', 'der', 'die', 'das', 'der'];
-
-const GENDER_COLORS = {
-  der: 'from-blue-400 to-blue-600',
-  die: 'from-pink-400 to-pink-600',
-  das: 'from-green-400 to-green-600',
+const PREPOSITION_COLORS = {
+  'an': 'from-blue-400 to-blue-600',
+  'über': 'from-pink-400 to-pink-600',
+  'von': 'from-green-400 to-green-600',
+  'für': 'from-amber-400 to-amber-600',
+  'mit': 'from-cyan-400 to-cyan-600',
+  'auf': 'from-violet-400 to-violet-600',
+  'nach': 'from-rose-400 to-rose-600',
 };
 
-const GENDER_LABEL_COLORS = {
-  der: 'text-blue-400',
-  die: 'text-pink-400',
-  das: 'text-green-400',
+const PREPOSITION_LABEL_COLORS = {
+  'an': 'text-blue-400',
+  'über': 'text-pink-400',
+  'von': 'text-green-400',
+  'für': 'text-amber-400',
+  'mit': 'text-cyan-400',
+  'auf': 'text-violet-400',
+  'nach': 'text-rose-400',
 };
 
 const PLAYER_COLORS = {
@@ -63,8 +101,8 @@ const PLAYER_SHADOW = {
   player2: 'shadow-yellow-500/50',
 };
 
-const NounGenderGame = ({ onBack }) => {
-  const [gameState, setGameState] = useState('menu'); // menu, playing, gameOver
+const VerbPrepositionGame = ({ onBack }) => {
+  const [gameState, setGameState] = useState('menu');
   const [board, setBoard] = useState(Array(6).fill().map(() => Array(7).fill(null)));
   const [currentPlayer, setCurrentPlayer] = useState('player1');
   const [winner, setWinner] = useState(null);
@@ -72,19 +110,16 @@ const NounGenderGame = ({ onBack }) => {
   const [winningCells, setWinningCells] = useState([]);
   const [hoveredCol, setHoveredCol] = useState(null);
   const [animatingPieces, setAnimatingPieces] = useState(new Set());
-  const [selectedWord, setSelectedWord] = useState(null);
-  const [usedWords, setUsedWords] = useState(new Set());
-  const [lastResult, setLastResult] = useState(null); // { correct, word, column, actualGender, columnGender }
-  const [words, setWords] = useState([]);
+  const [selectedVerb, setSelectedVerb] = useState(null);
+  const [usedVerbs, setUsedVerbs] = useState(new Set());
+  const [lastResult, setLastResult] = useState(null);
+  const [verbs, setVerbs] = useState([]);
   const boardRef = useRef(null);
 
-  // Shuffle words
-  const shuffleWords = () => {
-    const shuffled = [...ALL_WORDS].sort(() => Math.random() - 0.5);
-    return shuffled;
+  const shuffleVerbs = () => {
+    return [...ALL_VERBS].sort(() => Math.random() - 0.5);
   };
 
-  // Check for winner
   const checkWinner = (board, row, col) => {
     const player = board[row][col];
     if (!player) return null;
@@ -98,7 +133,6 @@ const NounGenderGame = ({ onBack }) => {
 
     for (const [dir1, dir2] of directions) {
       const cells = [[row, col]];
-
       for (const [dr, dc] of [dir1, dir2]) {
         let r = row + dr;
         let c = col + dc;
@@ -108,7 +142,6 @@ const NounGenderGame = ({ onBack }) => {
           c += dc;
         }
       }
-
       if (cells.length >= 4) {
         setWinningCells(cells);
         return player;
@@ -117,34 +150,25 @@ const NounGenderGame = ({ onBack }) => {
     return null;
   };
 
-  // Check if board is full
-  const isBoardFull = (board) => {
-    return board[0].every(cell => cell !== null);
-  };
+  const isBoardFull = (board) => board[0].every(cell => cell !== null);
 
-  // Get available row in column
   const getAvailableRow = (board, col) => {
     for (let row = 5; row >= 0; row--) {
-      if (board[row][col] === null) {
-        return row;
-      }
+      if (board[row][col] === null) return row;
     }
     return -1;
   };
 
-  // Handle column click - place selected word
   const handleColumnClick = (col) => {
-    if (gameState !== 'playing' || !selectedWord) return;
+    if (gameState !== 'playing' || !selectedVerb) return;
 
     const row = getAvailableRow(board, col);
     if (row === -1) return;
 
-    const columnGender = COLUMN_GENDERS[col];
-    const wordGender = selectedWord.gender;
-    const isCorrect = wordGender === columnGender;
+    const columnPreposition = COLUMN_PREPOSITIONS[col];
+    const verbPreposition = selectedVerb.preposition;
+    const isCorrect = verbPreposition === columnPreposition;
 
-    // If correct, piece is current player's color
-    // If wrong, piece becomes opponent's color
     const pieceOwner = isCorrect ? currentPlayer : (currentPlayer === 'player1' ? 'player2' : 'player1');
 
     const pieceId = `${row}-${col}`;
@@ -155,20 +179,19 @@ const NounGenderGame = ({ onBack }) => {
     setBoard(newBoard);
     setLastMove({ row, col });
 
-    // Mark word as used
-    setUsedWords(prev => new Set(prev).add(selectedWord.word));
+    setUsedVerbs(prev => new Set(prev).add(selectedVerb.verb));
 
-    // Set result feedback
     setLastResult({
       correct: isCorrect,
-      word: selectedWord.word,
+      verb: selectedVerb.verb,
+      example: selectedVerb.example,
       column: col,
-      actualGender: wordGender,
-      columnGender: columnGender,
+      actualPreposition: verbPreposition,
+      columnPreposition: columnPreposition,
       player: currentPlayer,
     });
 
-    setSelectedWord(null);
+    setSelectedVerb(null);
 
     setTimeout(() => {
       setAnimatingPieces(prev => {
@@ -178,7 +201,6 @@ const NounGenderGame = ({ onBack }) => {
       });
     }, 300);
 
-    // Check for winner
     const w = checkWinner(newBoard, row, col);
     if (w) {
       setWinner(w);
@@ -192,11 +214,9 @@ const NounGenderGame = ({ onBack }) => {
       return;
     }
 
-    // Switch player
     setCurrentPlayer(currentPlayer === 'player1' ? 'player2' : 'player1');
   };
 
-  // Start game
   const startGame = () => {
     setGameState('playing');
     setBoard(Array(6).fill().map(() => Array(7).fill(null)));
@@ -204,13 +224,12 @@ const NounGenderGame = ({ onBack }) => {
     setWinner(null);
     setLastMove(null);
     setWinningCells([]);
-    setSelectedWord(null);
-    setUsedWords(new Set());
+    setSelectedVerb(null);
+    setUsedVerbs(new Set());
     setLastResult(null);
-    setWords(shuffleWords());
+    setVerbs(shuffleVerbs());
   };
 
-  // Reset game
   const resetGame = () => {
     setGameState('menu');
     setBoard(Array(6).fill().map(() => Array(7).fill(null)));
@@ -218,21 +237,21 @@ const NounGenderGame = ({ onBack }) => {
     setWinner(null);
     setLastMove(null);
     setWinningCells([]);
-    setSelectedWord(null);
-    setUsedWords(new Set());
+    setSelectedVerb(null);
+    setUsedVerbs(new Set());
     setLastResult(null);
-    setWords([]);
+    setVerbs([]);
   };
 
-  const availableWords = words.filter(w => !usedWords.has(w.word));
+  const availableVerbs = verbs.filter(v => !usedVerbs.has(v.verb));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 relative overflow-hidden">
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-40 left-40 w-80 h-80 bg-violet-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
       {/* Menu */}
@@ -244,19 +263,24 @@ const NounGenderGame = ({ onBack }) => {
                 ← Zurück zum Menü
               </button>
             )}
-            <h1 className="text-5xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 via-pink-400 to-green-400 bg-clip-text text-transparent">
-              Der Die Das
+            <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+              Verb + Präposition
             </h1>
-            <p className="text-center text-gray-300 mb-2 text-lg">Genus-Spiel</p>
+            <p className="text-center text-gray-300 mb-2 text-lg">Rektion der Verben</p>
             <p className="text-center text-gray-400 mb-8 text-sm">
-              Lerne die Artikel deutscher Substantive!
+              Lerne die festen Verb-Präposition-Verbindungen!
             </p>
 
             <div className="bg-white/5 rounded-xl p-4 mb-8 text-sm text-gray-300 space-y-2">
-              <p><span className="text-blue-400 font-bold">der</span> = maskulin | <span className="text-pink-400 font-bold">die</span> = feminin | <span className="text-green-400 font-bold">das</span> = neutral</p>
-              <p>Jede Spalte hat einen Artikel. Wahle ein Wort und setze es in die richtige Spalte!</p>
+              <p>7 Präpositionen in 7 Spalten:</p>
+              <div className="flex flex-wrap gap-2 my-2">
+                {COLUMN_PREPOSITIONS.map(p => (
+                  <span key={p} className={`${PREPOSITION_LABEL_COLORS[p]} font-bold px-2 py-1 bg-white/5 rounded`}>{p}</span>
+                ))}
+              </div>
+              <p>Wähle ein Verb und setze es in die Spalte mit der richtigen Präposition!</p>
               <p>Richtig = deine Farbe. Falsch = Farbe des Gegners!</p>
-              <p>4 in einer Reihe gewinnt (horizontal, vertikal oder diagonal).</p>
+              <p>4 in einer Reihe gewinnt!</p>
             </div>
 
             <div className="space-y-4">
@@ -274,7 +298,7 @@ const NounGenderGame = ({ onBack }) => {
 
               <button
                 onClick={startGame}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center gap-3 group"
+                className="w-full bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center gap-3"
               >
                 <Users className="w-5 h-5" />
                 <span>Spiel starten</span>
@@ -299,8 +323,8 @@ const NounGenderGame = ({ onBack }) => {
                         ← Zurück
                       </button>
                     )}
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-pink-400 to-green-400 bg-clip-text text-transparent">
-                      Der Die Das
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+                      Verb + Präposition
                     </h1>
                   </div>
                   <div className="flex items-center gap-3">
@@ -323,19 +347,19 @@ const NounGenderGame = ({ onBack }) => {
                   </div>
                 </div>
 
-                {/* Selected word indicator */}
+                {/* Selected verb indicator */}
                 {gameState === 'playing' && (
                   <div className="mb-3 text-center">
-                    {selectedWord ? (
+                    {selectedVerb ? (
                       <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
-                        <span className="text-gray-400 text-sm">Gewahltes Wort:</span>
-                        <span className="text-white font-bold text-lg">{selectedWord.word}</span>
-                        <span className="text-gray-500 text-xs">({selectedWord.translation})</span>
-                        <span className="text-gray-400 text-sm ml-2">→ Wahle eine Spalte!</span>
+                        <span className="text-gray-400 text-sm">Gewähltes Verb:</span>
+                        <span className="text-white font-bold text-lg">{selectedVerb.verb}</span>
+                        <span className="text-gray-500 text-xs">({selectedVerb.translation})</span>
+                        <span className="text-gray-400 text-sm ml-2">→ Wähle eine Spalte!</span>
                       </div>
                     ) : (
                       <div className="inline-flex items-center gap-2 bg-white/5 rounded-full px-4 py-2">
-                        <span className="text-gray-500 text-sm">← Wahle zuerst ein Wort aus der Liste</span>
+                        <span className="text-gray-500 text-sm">← Wähle zuerst ein Verb aus der Liste</span>
                       </div>
                     )}
                   </div>
@@ -344,48 +368,44 @@ const NounGenderGame = ({ onBack }) => {
                 {/* Result feedback */}
                 {lastResult && (
                   <div className={`mb-3 text-center transition-all duration-500 ${
-                    lastResult.correct
-                      ? 'text-green-400'
-                      : 'text-red-400'
+                    lastResult.correct ? 'text-green-400' : 'text-red-400'
                   }`}>
                     <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${
                       lastResult.correct ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'
                     }`}>
                       {lastResult.correct ? (
-                        <span>Richtig! <strong>{lastResult.actualGender} {lastResult.word}</strong></span>
+                        <span>Richtig! <strong>{lastResult.example}</strong></span>
                       ) : (
-                        <span>Falsch! <strong>{lastResult.word}</strong> ist <strong>{lastResult.actualGender}</strong>, nicht {lastResult.columnGender}. Punkt fur den Gegner!</span>
+                        <span>Falsch! <strong>{lastResult.verb}</strong> → <strong>{lastResult.actualPreposition}</strong>, nicht {lastResult.columnPreposition}. Punkt für den Gegner!</span>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* Column gender labels */}
+                {/* Column preposition labels */}
                 <div className="grid grid-cols-7 gap-2 mb-1 px-4">
-                  {COLUMN_GENDERS.map((gender, col) => (
-                    <div key={col} className={`text-center font-bold text-sm ${GENDER_LABEL_COLORS[gender]}`}>
-                      {gender}
+                  {COLUMN_PREPOSITIONS.map((prep, col) => (
+                    <div key={col} className={`text-center font-bold text-sm ${PREPOSITION_LABEL_COLORS[prep]}`}>
+                      {prep}
                     </div>
                   ))}
                 </div>
 
                 {/* Board */}
-                <div ref={boardRef} className="bg-blue-900/50 rounded-2xl p-4 shadow-inner">
+                <div ref={boardRef} className="bg-indigo-900/50 rounded-2xl p-4 shadow-inner">
                   <div className="grid grid-cols-7 gap-2">
                     {Array(7).fill().map((_, col) => (
                       <div
                         key={col}
-                        className={`relative ${selectedWord ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                        className={`relative ${selectedVerb ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                         onClick={() => handleColumnClick(col)}
                         onMouseEnter={() => setHoveredCol(col)}
                         onMouseLeave={() => setHoveredCol(null)}
                       >
-                        {/* Column hover effect */}
-                        {hoveredCol === col && selectedWord && gameState === 'playing' && (
+                        {hoveredCol === col && selectedVerb && gameState === 'playing' && (
                           <div className="absolute top-0 left-0 right-0 h-full bg-white/5 rounded-lg pointer-events-none" />
                         )}
 
-                        {/* Cells */}
                         {board.map((row, rowIndex) => {
                           const isWinning = winningCells.some(([r, c]) => r === rowIndex && c === col);
                           const isLastMove = lastMove?.row === rowIndex && lastMove?.col === col;
@@ -394,9 +414,9 @@ const NounGenderGame = ({ onBack }) => {
                           return (
                             <div
                               key={rowIndex}
-                              className={`aspect-square rounded-full border-4 border-blue-800 relative overflow-hidden transition-all duration-300 ${
-                                row[col] === null ? 'bg-blue-950/50' : ''
-                              } ${selectedWord && row[col] === null ? 'hover:bg-blue-900/50' : ''}`}
+                              className={`aspect-square rounded-full border-4 border-indigo-800 relative overflow-hidden transition-all duration-300 ${
+                                row[col] === null ? 'bg-indigo-950/50' : ''
+                              } ${selectedVerb && row[col] === null ? 'hover:bg-indigo-900/50' : ''}`}
                             >
                               {row[col] && (
                                 <div className={`absolute inset-0 bg-gradient-to-br ${
@@ -432,7 +452,7 @@ const NounGenderGame = ({ onBack }) => {
                     </h2>
                     <button
                       onClick={resetGame}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg inline-flex items-center gap-2"
+                      className="bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg inline-flex items-center gap-2"
                     >
                       <RotateCcw className="w-4 h-4" />
                       Nochmal spielen
@@ -442,70 +462,70 @@ const NounGenderGame = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Word Panel */}
+            {/* Verb Panel */}
             <div className="w-80">
               <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-5 shadow-2xl border border-white/20">
                 <div className="flex items-center gap-2 mb-4">
-                  <GripVertical className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-lg font-semibold text-white">Worter</h2>
+                  <GripVertical className="w-5 h-5 text-indigo-400" />
+                  <h2 className="text-lg font-semibold text-white">Verben</h2>
                   <span className="ml-auto text-sm text-gray-400">
-                    {availableWords.length} ubrig
+                    {availableVerbs.length} übrig
                   </span>
                 </div>
 
                 <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
-                  {words.map((wordObj) => {
-                    const isUsed = usedWords.has(wordObj.word);
-                    const isSelected = selectedWord?.word === wordObj.word;
+                  {verbs.map((verbObj) => {
+                    const isUsed = usedVerbs.has(verbObj.verb);
+                    const isSelected = selectedVerb?.verb === verbObj.verb;
 
                     return (
                       <button
-                        key={wordObj.word}
+                        key={verbObj.verb}
                         disabled={isUsed || gameState === 'gameOver'}
                         onClick={() => {
                           if (!isUsed && gameState === 'playing') {
-                            setSelectedWord(isSelected ? null : wordObj);
+                            setSelectedVerb(isSelected ? null : verbObj);
                           }
                         }}
                         className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-center justify-between group ${
                           isUsed
                             ? 'bg-white/5 opacity-30 cursor-not-allowed line-through'
                             : isSelected
-                              ? 'bg-purple-500/30 border-2 border-purple-400 shadow-lg shadow-purple-500/20 scale-[1.02]'
+                              ? 'bg-indigo-500/30 border-2 border-indigo-400 shadow-lg shadow-indigo-500/20 scale-[1.02]'
                               : 'bg-white/5 hover:bg-white/10 border-2 border-transparent cursor-pointer hover:scale-[1.01]'
                         }`}
                       >
                         <div>
-                          <span className={`font-semibold ${isSelected ? 'text-purple-200' : 'text-white'}`}>
-                            {wordObj.word}
+                          <span className={`font-semibold ${isSelected ? 'text-indigo-200' : 'text-white'}`}>
+                            {verbObj.verb}
                           </span>
                           <span className="text-gray-500 text-xs ml-2">
-                            {wordObj.translation}
+                            {verbObj.translation}
                           </span>
                         </div>
                         {isUsed && (
-                          <span className={`text-xs font-bold ${GENDER_LABEL_COLORS[wordObj.gender]}`}>
-                            {wordObj.gender}
+                          <span className={`text-xs font-bold ${PREPOSITION_LABEL_COLORS[verbObj.preposition]}`}>
+                            {verbObj.preposition}
                           </span>
                         )}
                       </button>
                     );
                   })}
 
-                  {availableWords.length === 0 && gameState === 'playing' && (
+                  {availableVerbs.length === 0 && gameState === 'playing' && (
                     <p className="text-gray-500 text-center py-4 text-sm">
-                      Alle Worter wurden benutzt!
+                      Alle Verben wurden benutzt!
                     </p>
                   )}
                 </div>
 
                 {/* Legend */}
                 <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs text-gray-500 mb-2">Spalten-Artikel:</p>
+                  <p className="text-xs text-gray-500 mb-2">Spalten-Präpositionen:</p>
                   <div className="flex gap-2 text-xs flex-wrap">
-                    {COLUMN_GENDERS.map((gender, i) => (
-                      <span key={i} className={`${GENDER_LABEL_COLORS[gender]} font-bold`}>
-                        {i + 1}:{gender}
+                    {COLUMN_PREPOSITIONS.map((prep, i) => (
+                      <span key={i} className={`${PREPOSITION_LABEL_COLORS[prep]} font-bold`}>
+                        {i + 1}:{prep}
                       </span>
                     ))}
                   </div>
@@ -548,4 +568,4 @@ const NounGenderGame = ({ onBack }) => {
   );
 };
 
-export default NounGenderGame;
+export default VerbPrepositionGame;
