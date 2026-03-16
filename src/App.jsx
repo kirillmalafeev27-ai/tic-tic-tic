@@ -3,6 +3,7 @@ import NounGenderGame from './NounGenderGame'
 import VerbPrepositionGame from './VerbPrepositionGame'
 import AccusativeGame from './AccusativeGame'
 import WennWannAlsGame from './WennWannAlsGame'
+import DativPronomenGame from './DativPronomenGame'
 
 function App() {
   const [activeGame, setActiveGame] = useState(null)
@@ -23,6 +24,10 @@ function App() {
     return <WennWannAlsGame onBack={() => setActiveGame(null)} />
   }
 
+  if (activeGame === 'dativ-pronomen') {
+    return <DativPronomenGame onBack={() => setActiveGame(null)} />
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
@@ -32,7 +37,7 @@ function App() {
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center">
-        <div className="max-w-6xl w-full px-6">
+        <div className="max-w-7xl w-full px-6">
           <h1 className="text-6xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 via-pink-400 to-green-400 bg-clip-text text-transparent">
             Deutsch Spiele
           </h1>
@@ -40,7 +45,7 @@ function App() {
             Wähle ein Spiel zum Üben!
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             <button
               onClick={() => setActiveGame('noun-gender')}
               className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
@@ -112,6 +117,27 @@ function App() {
                 <span className="text-amber-400 font-bold text-xs px-2 py-1 bg-amber-400/10 rounded">wenn</span>
                 <span className="text-sky-400 font-bold text-xs px-2 py-1 bg-sky-400/10 rounded">wann</span>
                 <span className="text-violet-400 font-bold text-xs px-2 py-1 bg-violet-400/10 rounded">als</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveGame('dativ-pronomen')}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
+            >
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-rose-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+                Dativ-Pronomen
+              </h2>
+              <p className="text-gray-300 text-sm mb-4">Personalpronomen</p>
+              <p className="text-gray-500 text-xs">
+                Ersetze das Nomen durch das richtige Pronomen im Dativ! 48 Sätze.
+              </p>
+              <div className="flex gap-1 mt-4 flex-wrap">
+                <span className="text-rose-400 font-bold text-xs px-1.5 py-0.5 bg-rose-400/10 rounded">mir</span>
+                <span className="text-amber-400 font-bold text-xs px-1.5 py-0.5 bg-amber-400/10 rounded">dir</span>
+                <span className="text-blue-400 font-bold text-xs px-1.5 py-0.5 bg-blue-400/10 rounded">ihm</span>
+                <span className="text-pink-400 font-bold text-xs px-1.5 py-0.5 bg-pink-400/10 rounded">ihr</span>
+                <span className="text-emerald-400 font-bold text-xs px-1.5 py-0.5 bg-emerald-400/10 rounded">uns</span>
+                <span className="text-violet-400 font-bold text-xs px-1.5 py-0.5 bg-violet-400/10 rounded">ihnen</span>
+                <span className="text-cyan-400 font-bold text-xs px-1.5 py-0.5 bg-cyan-400/10 rounded">Ihnen</span>
               </div>
             </button>
           </div>
