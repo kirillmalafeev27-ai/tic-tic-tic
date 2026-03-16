@@ -2,6 +2,7 @@ import { useState } from 'react'
 import NounGenderGame from './NounGenderGame'
 import VerbPrepositionGame from './VerbPrepositionGame'
 import AccusativeGame from './AccusativeGame'
+import WennWannAlsGame from './WennWannAlsGame'
 
 function App() {
   const [activeGame, setActiveGame] = useState(null)
@@ -18,6 +19,10 @@ function App() {
     return <AccusativeGame onBack={() => setActiveGame(null)} />
   }
 
+  if (activeGame === 'wenn-wann-als') {
+    return <WennWannAlsGame onBack={() => setActiveGame(null)} />
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
@@ -27,7 +32,7 @@ function App() {
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center">
-        <div className="max-w-4xl w-full px-6">
+        <div className="max-w-6xl w-full px-6">
           <h1 className="text-6xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 via-pink-400 to-green-400 bg-clip-text text-transparent">
             Deutsch Spiele
           </h1>
@@ -35,7 +40,7 @@ function App() {
             Wähle ein Spiel zum Üben!
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <button
               onClick={() => setActiveGame('noun-gender')}
               className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
@@ -90,6 +95,23 @@ function App() {
                 <span className="text-blue-400 font-bold text-xs px-2 py-1 bg-blue-400/10 rounded">den</span>
                 <span className="text-pink-400 font-bold text-xs px-2 py-1 bg-pink-400/10 rounded">die</span>
                 <span className="text-green-400 font-bold text-xs px-2 py-1 bg-green-400/10 rounded">das</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveGame('wenn-wann-als')}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
+            >
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-amber-400 via-sky-400 to-violet-400 bg-clip-text text-transparent">
+                wenn / wann / als
+              </h2>
+              <p className="text-gray-300 text-sm mb-4">Temporale Nebensätze</p>
+              <p className="text-gray-500 text-xs">
+                Lerne den Unterschied! 48 Sätze mit wenn, wann und als.
+              </p>
+              <div className="flex gap-2 mt-4">
+                <span className="text-amber-400 font-bold text-xs px-2 py-1 bg-amber-400/10 rounded">wenn</span>
+                <span className="text-sky-400 font-bold text-xs px-2 py-1 bg-sky-400/10 rounded">wann</span>
+                <span className="text-violet-400 font-bold text-xs px-2 py-1 bg-violet-400/10 rounded">als</span>
               </div>
             </button>
           </div>
