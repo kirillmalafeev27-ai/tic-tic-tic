@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { RotateCcw, User, Users, GripVertical } from 'lucide-react';
+import CursorGlow from './CursorGlow';
 
 // Column articles in Akkusativ: den (maskulin), die (feminin), das (neutral)
 // In Akkusativ only maskulin changes: der → den
@@ -250,6 +251,7 @@ const AccusativeGame = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-hidden">
+      <CursorGlow colors="#10b981, #3b82f6, #ec4899" size={500} blur={180} opacity={0.3} />
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-emerald-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>

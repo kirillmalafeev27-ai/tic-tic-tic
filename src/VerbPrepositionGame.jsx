@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { RotateCcw, User, Users, GripVertical } from 'lucide-react';
+import CursorGlow from './CursorGlow';
 
 // 7 unique prepositions for columns
 const COLUMN_PREPOSITIONS = ['an', 'über', 'von', 'für', 'mit', 'auf', 'nach'];
@@ -247,6 +248,7 @@ const VerbPrepositionGame = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 relative overflow-hidden">
+      <CursorGlow colors="#6366f1, #06b6d4, #8b5cf6" size={500} blur={180} opacity={0.3} />
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>

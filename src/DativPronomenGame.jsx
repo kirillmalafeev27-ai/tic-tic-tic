@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { RotateCcw, User, Users, GripVertical } from 'lucide-react';
+import CursorGlow from './CursorGlow';
 
 // 7 columns: mir, dir, ihm, ihr, uns, ihnen, Ihnen
 const COLUMN_ANSWERS = ['mir', 'dir', 'ihm', 'ihr', 'uns', 'ihnen', 'Ihnen'];
@@ -233,6 +234,7 @@ const DativPronomenGame = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-rose-900 to-slate-900 relative overflow-hidden">
+      <CursorGlow colors="#f43f5e, #3b82f6, #8b5cf6" size={500} blur={180} opacity={0.3} />
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-rose-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>

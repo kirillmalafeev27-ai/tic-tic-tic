@@ -4,6 +4,7 @@ import VerbPrepositionGame from './VerbPrepositionGame'
 import AccusativeGame from './AccusativeGame'
 import WennWannAlsGame from './WennWannAlsGame'
 import DativPronomenGame from './DativPronomenGame'
+import CursorGlow from './CursorGlow'
 
 function App() {
   const [activeGame, setActiveGame] = useState(null)
@@ -30,6 +31,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      <CursorGlow colors="#a855f7, #ec4899, #3b82f6" size={500} blur={180} opacity={0.35} />
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
