@@ -4,6 +4,7 @@ import VerbPrepositionGame from './VerbPrepositionGame'
 import AccusativeGame from './AccusativeGame'
 import WennWannAlsGame from './WennWannAlsGame'
 import DativPronomenGame from './DativPronomenGame'
+import PerfektGame from './PerfektGame'
 import CursorGlow from './CursorGlow'
 
 function App() {
@@ -29,6 +30,10 @@ function App() {
     return <DativPronomenGame onBack={() => setActiveGame(null)} />
   }
 
+  if (activeGame === 'perfekt') {
+    return <PerfektGame onBack={() => setActiveGame(null)} />
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <CursorGlow colors="#a855f7, #ec4899, #3b82f6" size={500} blur={180} opacity={0.35} />
@@ -47,7 +52,7 @@ function App() {
             Wähle ein Spiel zum Üben!
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             <button
               onClick={() => setActiveGame('noun-gender')}
               className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
@@ -140,6 +145,22 @@ function App() {
                 <span className="text-emerald-400 font-bold text-xs px-1.5 py-0.5 bg-emerald-400/10 rounded">uns</span>
                 <span className="text-violet-400 font-bold text-xs px-1.5 py-0.5 bg-violet-400/10 rounded">ihnen</span>
                 <span className="text-cyan-400 font-bold text-xs px-1.5 py-0.5 bg-cyan-400/10 rounded">Ihnen</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveGame('perfekt')}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
+            >
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 bg-clip-text text-transparent">
+                Perfekt
+              </h2>
+              <p className="text-gray-300 text-sm mb-4">haben oder sein?</p>
+              <p className="text-gray-500 text-xs">
+                Wähle das richtige Hilfsverb im Perfekt! 42 Verben, 2 Hilfsverben.
+              </p>
+              <div className="flex gap-2 mt-4">
+                <span className="text-emerald-400 font-bold text-xs px-2 py-1 bg-emerald-400/10 rounded">haben</span>
+                <span className="text-amber-400 font-bold text-xs px-2 py-1 bg-amber-400/10 rounded">sein</span>
               </div>
             </button>
           </div>
