@@ -7,85 +7,81 @@ import CursorGlow from './CursorGlow';
 // Columns: den, die, das, den, die, das, den
 const COLUMN_ARTICLES = ['den', 'die', 'das', 'den', 'die', 'das', 'den'];
 
-// 45 nouns: 15 per gender
-const ALL_NOUNS = [
-  // der → den (maskulin) - 15 words
-  { word: 'Hund', article: 'den', nominativ: 'der', translation: 'dog' },
-  { word: 'Mann', article: 'den', nominativ: 'der', translation: 'man' },
-  { word: 'Tisch', article: 'den', nominativ: 'der', translation: 'table' },
-  { word: 'Stuhl', article: 'den', nominativ: 'der', translation: 'chair' },
-  { word: 'Apfel', article: 'den', nominativ: 'der', translation: 'apple' },
-  { word: 'Ball', article: 'den', nominativ: 'der', translation: 'ball' },
-  { word: 'Tag', article: 'den', nominativ: 'der', translation: 'day' },
-  { word: 'Schuh', article: 'den', nominativ: 'der', translation: 'shoe' },
-  { word: 'Baum', article: 'den', nominativ: 'der', translation: 'tree' },
-  { word: 'Fisch', article: 'den', nominativ: 'der', translation: 'fish' },
-  { word: 'Kuchen', article: 'den', nominativ: 'der', translation: 'cake' },
-  { word: 'Saft', article: 'den', nominativ: 'der', translation: 'juice' },
-  { word: 'Tee', article: 'den', nominativ: 'der', translation: 'tea' },
-  { word: 'Käse', article: 'den', nominativ: 'der', translation: 'cheese' },
-  { word: 'Mantel', article: 'den', nominativ: 'der', translation: 'coat' },
-
-  // die (feminin) - 15 words
-  { word: 'Katze', article: 'die', nominativ: 'die', translation: 'cat' },
-  { word: 'Frau', article: 'die', nominativ: 'die', translation: 'woman' },
-  { word: 'Blume', article: 'die', nominativ: 'die', translation: 'flower' },
-  { word: 'Lampe', article: 'die', nominativ: 'die', translation: 'lamp' },
-  { word: 'Milch', article: 'die', nominativ: 'die', translation: 'milk' },
-  { word: 'Tasse', article: 'die', nominativ: 'die', translation: 'cup' },
-  { word: 'Uhr', article: 'die', nominativ: 'die', translation: 'clock' },
-  { word: 'Nase', article: 'die', nominativ: 'die', translation: 'nose' },
-  { word: 'Sonne', article: 'die', nominativ: 'die', translation: 'sun' },
-  { word: 'Tasche', article: 'die', nominativ: 'die', translation: 'bag' },
-  { word: 'Jacke', article: 'die', nominativ: 'die', translation: 'jacket' },
-  { word: 'Suppe', article: 'die', nominativ: 'die', translation: 'soup' },
-  { word: 'Zeitung', article: 'die', nominativ: 'die', translation: 'newspaper' },
-  { word: 'Musik', article: 'die', nominativ: 'die', translation: 'music' },
-  { word: 'Tür', article: 'die', nominativ: 'die', translation: 'door' },
-
-  // das (neutral) - 15 words
-  { word: 'Buch', article: 'das', nominativ: 'das', translation: 'book' },
-  { word: 'Kind', article: 'das', nominativ: 'das', translation: 'child' },
-  { word: 'Haus', article: 'das', nominativ: 'das', translation: 'house' },
-  { word: 'Bett', article: 'das', nominativ: 'das', translation: 'bed' },
-  { word: 'Bild', article: 'das', nominativ: 'das', translation: 'picture' },
-  { word: 'Auto', article: 'das', nominativ: 'das', translation: 'car' },
-  { word: 'Glas', article: 'das', nominativ: 'das', translation: 'glass' },
-  { word: 'Brot', article: 'das', nominativ: 'das', translation: 'bread' },
-  { word: 'Ei', article: 'das', nominativ: 'das', translation: 'egg' },
-  { word: 'Tier', article: 'das', nominativ: 'das', translation: 'animal' },
-  { word: 'Handy', article: 'das', nominativ: 'das', translation: 'phone' },
-  { word: 'Fenster', article: 'das', nominativ: 'das', translation: 'window' },
-  { word: 'Wasser', article: 'das', nominativ: 'das', translation: 'water' },
-  { word: 'Kleid', article: 'das', nominativ: 'das', translation: 'dress' },
-  { word: 'Spiel', article: 'das', nominativ: 'das', translation: 'game' },
-];
-
-// 9 A1 verbs (5 sentences each = 45 sentences)
+// 9 A1 verbs
 const VERBS = ['sehen', 'haben', 'kaufen', 'brauchen', 'suchen', 'finden', 'nehmen', 'trinken', 'essen'];
 
-// Generate 45 sentences: each verb gets 5 nouns (mix of genders)
+// Fixed verb-noun pairings (semantically appropriate, no random mismatches)
+const FIXED_SENTENCES = [
+  // sehen (5) — seeing people, animals
+  { verb: 'sehen', noun: 'Hund', article: 'den', translation: 'dog' },
+  { verb: 'sehen', noun: 'Mann', article: 'den', translation: 'man' },
+  { verb: 'sehen', noun: 'Katze', article: 'die', translation: 'cat' },
+  { verb: 'sehen', noun: 'Frau', article: 'die', translation: 'woman' },
+  { verb: 'sehen', noun: 'Kind', article: 'das', translation: 'child' },
+  // haben (5) — possessions
+  { verb: 'haben', noun: 'Tisch', article: 'den', translation: 'table' },
+  { verb: 'haben', noun: 'Ball', article: 'den', translation: 'ball' },
+  { verb: 'haben', noun: 'Lampe', article: 'die', translation: 'lamp' },
+  { verb: 'haben', noun: 'Auto', article: 'das', translation: 'car' },
+  { verb: 'haben', noun: 'Handy', article: 'das', translation: 'phone' },
+  // kaufen (5) — things you buy
+  { verb: 'kaufen', noun: 'Schuh', article: 'den', translation: 'shoe' },
+  { verb: 'kaufen', noun: 'Mantel', article: 'den', translation: 'coat' },
+  { verb: 'kaufen', noun: 'Jacke', article: 'die', translation: 'jacket' },
+  { verb: 'kaufen', noun: 'Zeitung', article: 'die', translation: 'newspaper' },
+  { verb: 'kaufen', noun: 'Kleid', article: 'das', translation: 'dress' },
+  // brauchen (5) — things you need
+  { verb: 'brauchen', noun: 'Tag', article: 'den', translation: 'day' },
+  { verb: 'brauchen', noun: 'Blume', article: 'die', translation: 'flower' },
+  { verb: 'brauchen', noun: 'Uhr', article: 'die', translation: 'clock' },
+  { verb: 'brauchen', noun: 'Bett', article: 'das', translation: 'bed' },
+  { verb: 'brauchen', noun: 'Glas', article: 'das', translation: 'glass' },
+  // suchen (5) — things you search for
+  { verb: 'suchen', noun: 'Baum', article: 'den', translation: 'tree' },
+  { verb: 'suchen', noun: 'Tür', article: 'die', translation: 'door' },
+  { verb: 'suchen', noun: 'Sonne', article: 'die', translation: 'sun' },
+  { verb: 'suchen', noun: 'Haus', article: 'das', translation: 'house' },
+  { verb: 'suchen', noun: 'Nase', article: 'die', translation: 'nose' },
+  // finden (5) — things you find
+  { verb: 'finden', noun: 'Musik', article: 'die', translation: 'music' },
+  { verb: 'finden', noun: 'Bild', article: 'das', translation: 'picture' },
+  { verb: 'finden', noun: 'Fenster', article: 'das', translation: 'window' },
+  { verb: 'finden', noun: 'Spiel', article: 'das', translation: 'game' },
+  { verb: 'finden', noun: 'Tier', article: 'das', translation: 'animal' },
+  // nehmen (5) — things you take
+  { verb: 'nehmen', noun: 'Käse', article: 'den', translation: 'cheese' },
+  { verb: 'nehmen', noun: 'Stuhl', article: 'den', translation: 'chair' },
+  { verb: 'nehmen', noun: 'Tasse', article: 'die', translation: 'cup' },
+  { verb: 'nehmen', noun: 'Tasche', article: 'die', translation: 'bag' },
+  { verb: 'nehmen', noun: 'Buch', article: 'das', translation: 'book' },
+  // trinken (5) — drinks
+  { verb: 'trinken', noun: 'Saft', article: 'den', translation: 'juice' },
+  { verb: 'trinken', noun: 'Tee', article: 'den', translation: 'tea' },
+  { verb: 'trinken', noun: 'Milch', article: 'die', translation: 'milk' },
+  { verb: 'trinken', noun: 'Suppe', article: 'die', translation: 'soup' },
+  { verb: 'trinken', noun: 'Wasser', article: 'das', translation: 'water' },
+  // essen (5) — food
+  { verb: 'essen', noun: 'Apfel', article: 'den', translation: 'apple' },
+  { verb: 'essen', noun: 'Kuchen', article: 'den', translation: 'cake' },
+  { verb: 'essen', noun: 'Fisch', article: 'den', translation: 'fish' },
+  { verb: 'essen', noun: 'Brot', article: 'das', translation: 'bread' },
+  { verb: 'essen', noun: 'Ei', article: 'das', translation: 'egg' },
+];
+
+// Generate sentences from fixed pairings (only shuffle order)
 function generateSentences() {
-  const sentences = [];
-  const shuffledNouns = [...ALL_NOUNS].sort(() => Math.random() - 0.5);
-
-  VERBS.forEach((verb, vIdx) => {
-    for (let i = 0; i < 5; i++) {
-      const noun = shuffledNouns[vIdx * 5 + i];
-      sentences.push({
-        id: `${verb}-${noun.word}`,
-        verb,
-        noun: noun.word,
-        article: noun.article,
-        translation: noun.translation,
-        sentence: `Ich ___ ${noun.article} ${noun.word}.`,
-        display: `${verb} → ${noun.word}`,
-        fullSentence: `Ich ${verb} ${noun.article} ${noun.word}.`,
-      });
-    }
-  });
-
-  return sentences.sort(() => Math.random() - 0.5);
+  return FIXED_SENTENCES
+    .map(s => ({
+      id: `${s.verb}-${s.noun}`,
+      verb: s.verb,
+      noun: s.noun,
+      article: s.article,
+      translation: s.translation,
+      sentence: `Ich ___ ${s.article} ${s.noun}.`,
+      display: `${s.verb} → ${s.noun}`,
+      fullSentence: `Ich ${s.verb} ${s.article} ${s.noun}.`,
+    }))
+    .sort(() => Math.random() - 0.5);
 }
 
 const ARTICLE_COLORS = {

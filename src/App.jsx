@@ -2,6 +2,7 @@ import { useState } from 'react'
 import NounGenderGame from './NounGenderGame'
 import VerbPrepositionGame from './VerbPrepositionGame'
 import AccusativeGame from './AccusativeGame'
+import AccusativeAdjectiveGame from './AccusativeAdjectiveGame'
 import WennWannAlsGame from './WennWannAlsGame'
 import DativPronomenGame from './DativPronomenGame'
 import PerfektGame from './PerfektGame'
@@ -20,6 +21,10 @@ function App() {
 
   if (activeGame === 'accusative') {
     return <AccusativeGame onBack={() => setActiveGame(null)} />
+  }
+
+  if (activeGame === 'accusative-adjective') {
+    return <AccusativeAdjectiveGame onBack={() => setActiveGame(null)} />
   }
 
   if (activeGame === 'wenn-wann-als') {
@@ -107,6 +112,25 @@ function App() {
                 <span className="text-blue-400 font-bold text-xs px-2 py-1 bg-blue-400/10 rounded">den</span>
                 <span className="text-pink-400 font-bold text-xs px-2 py-1 bg-pink-400/10 rounded">die</span>
                 <span className="text-green-400 font-bold text-xs px-2 py-1 bg-green-400/10 rounded">das</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveGame('accusative-adjective')}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
+            >
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Akkusativ + Adjektiv
+              </h2>
+              <p className="text-gray-300 text-sm mb-4">den / die / das + ist / sind</p>
+              <p className="text-gray-500 text-xs">
+                Akkusativ mit Adjektiven und Singular/Plural! 49 Karten, 9 Verben.
+              </p>
+              <div className="flex gap-1.5 mt-4 flex-wrap">
+                <span className="text-blue-400 font-bold text-xs px-2 py-1 bg-blue-400/10 rounded">den</span>
+                <span className="text-pink-400 font-bold text-xs px-2 py-1 bg-pink-400/10 rounded">die</span>
+                <span className="text-green-400 font-bold text-xs px-2 py-1 bg-green-400/10 rounded">das</span>
+                <span className="text-amber-400 font-bold text-xs px-1.5 py-1 bg-amber-400/10 rounded">ist</span>
+                <span className="text-cyan-400 font-bold text-xs px-1.5 py-1 bg-cyan-400/10 rounded">sind</span>
               </div>
             </button>
             <button
