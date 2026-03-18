@@ -111,7 +111,7 @@ function generateCards() {
       verbForm: c.verbForm,
       adj: c.adj,
       translation: c.translation,
-      display: `${c.verb} → ${c.article} ${c.noun}`,
+      display: `${c.verb} → ${c.noun}`,
       fullSentence: `Ich ${c.verb} ${c.article} ${c.noun}. ${c.article === 'den' ? 'Der' : c.article === 'die' ? 'Die' : 'Das'} ${c.noun} ${c.verbForm} ${c.adj}.`,
     }))
     .sort(() => Math.random() - 0.5);
@@ -376,7 +376,7 @@ const AccusativeAdjectiveGame = ({ onBack }) => {
                       <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 flex-wrap justify-center">
                         <span className="text-gray-400 text-sm">Karte:</span>
                         <span className="text-white font-bold text-lg">
-                          {selectedCard.verb} / {selectedCard.article} {selectedCard.noun} / <span className="text-amber-300">{selectedCard.adj}</span>
+                          {selectedCard.verb} / {selectedCard.noun} / <span className="text-amber-300">{selectedCard.adj}</span>
                         </span>
                         <span className="text-gray-500 text-xs">({selectedCard.translation})</span>
                         <span className="text-gray-400 text-sm ml-2">→ Wähle die richtige Spalte!</span>
@@ -529,7 +529,7 @@ const AccusativeAdjectiveGame = ({ onBack }) => {
                             {cardObj.verb}
                           </span>
                           <span className="text-gray-300 text-sm">
-                            / {cardObj.article} {cardObj.noun}
+                            / {cardObj.noun}
                           </span>
                           <span className="text-amber-400 text-sm font-medium">
                             / {cardObj.adj}
