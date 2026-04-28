@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import NounGenderGame from './NounGenderGame'
 import VerbPrepositionGame from './VerbPrepositionGame'
+import VerbPrepositionKidsGame from './VerbPrepositionKidsGame'
 import AccusativeGame from './AccusativeGame'
 import AccusativeAdjectiveGame from './AccusativeAdjectiveGame'
 import WennWannAlsGame from './WennWannAlsGame'
@@ -17,6 +18,10 @@ function App() {
 
   if (activeGame === 'verb-preposition') {
     return <VerbPrepositionGame onBack={() => setActiveGame(null)} />
+  }
+
+  if (activeGame === 'verb-preposition-kids') {
+    return <VerbPrepositionKidsGame onBack={() => setActiveGame(null)} />
   }
 
   if (activeGame === 'accusative') {
@@ -86,6 +91,27 @@ function App() {
               <p className="text-gray-300 text-sm mb-4">Rektion der Verben</p>
               <p className="text-gray-500 text-xs">
                 Lerne die festen Verb-Präposition-Verbindungen! 50 Verben, 7 Präpositionen.
+              </p>
+              <div className="flex gap-1.5 mt-4 flex-wrap">
+                <span className="text-blue-400 font-bold text-xs px-2 py-1 bg-blue-400/10 rounded">an</span>
+                <span className="text-pink-400 font-bold text-xs px-2 py-1 bg-pink-400/10 rounded">über</span>
+                <span className="text-green-400 font-bold text-xs px-2 py-1 bg-green-400/10 rounded">von</span>
+                <span className="text-amber-400 font-bold text-xs px-2 py-1 bg-amber-400/10 rounded">für</span>
+                <span className="text-cyan-400 font-bold text-xs px-2 py-1 bg-cyan-400/10 rounded">mit</span>
+                <span className="text-violet-400 font-bold text-xs px-2 py-1 bg-violet-400/10 rounded">auf</span>
+                <span className="text-rose-400 font-bold text-xs px-2 py-1 bg-rose-400/10 rounded">nach</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveGame('verb-preposition-kids')}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 text-left"
+            >
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-amber-300 via-pink-300 to-sky-300 bg-clip-text text-transparent">
+                Verb + Präposition
+              </h2>
+              <p className="text-gray-300 text-sm mb-4">Для детей (9 лет)</p>
+              <p className="text-gray-500 text-xs">
+                Простые глаголы с переводом на русский! 28 глаголов, 7 предлогов.
               </p>
               <div className="flex gap-1.5 mt-4 flex-wrap">
                 <span className="text-blue-400 font-bold text-xs px-2 py-1 bg-blue-400/10 rounded">an</span>
