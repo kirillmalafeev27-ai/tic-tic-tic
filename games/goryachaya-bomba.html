@@ -1,0 +1,2021 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>💣 Горячая бомба — немецкий</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   ГОРЯЧАЯ БОМБА — общая палитра и база набора
+   ========================================================================== */
+:root {
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+
+  --font-title: 'Bangers', 'Impact', 'Haettenschweiler', system-ui, sans-serif;
+  --font-text: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+
+  /* переменные «жара» бомбы, их крутит скрипт */
+  --heat: 0;
+  --pulse-dur: 1.1s;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-text);
+  color: #fff;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,61,139,.35), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(78,205,196,.28), transparent 42%),
+    radial-gradient(circle at 50% 92%, rgba(255,159,28,.28), transparent 48%),
+    linear-gradient(135deg, var(--bg), var(--bg-2));
+  background-attachment: fixed;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* полутоновая сетка поверх фона */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ==========================================================================
+   ОБЩИЕ КОМИКС-ЭЛЕМЕНТЫ
+   ========================================================================== */
+.panel {
+  background: rgba(20,16,43,.72);
+  border: 5px solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+/* физические кнопки — основа всего набора */
+.btn {
+  font-family: var(--font-title);
+  letter-spacing: 1.2px;
+  font-size: clamp(1.05rem, 3.4vw, 1.6rem);
+  padding: .55em 1.1em;
+  min-height: 52px;
+  min-width: 52px;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  transform: rotate(-1.2deg);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.btn:hover  { transform: translate(-3px,-3px) rotate(-1.2deg); box-shadow: 9px 9px 0 var(--ink); }
+.btn:active { transform: translate(4px,4px) rotate(-1.2deg);  box-shadow: 2px 2px 0 var(--ink); }
+.btn:focus-visible { outline: 4px dashed var(--cyan); outline-offset: 4px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.btn.pink  { background: var(--pink);  color: #fff; }
+.btn.cyan  { background: var(--cyan); }
+.btn.green { background: var(--green); }
+.btn.red   { background: var(--red);   color: #fff; }
+.btn.ghost { background: rgba(255,255,255,.14); color: #fff; }
+
+/* ==========================================================================
+   КАРКАС ЭКРАНОВ
+   ========================================================================== */
+#app {
+  position: relative;
+  z-index: 5;
+  min-height: 100vh;
+  padding: clamp(10px, 2.5vw, 26px);
+  display: flex;
+  flex-direction: column;
+}
+.screen { display: none; flex: 1; flex-direction: column; }
+.screen.on { display: flex; }
+
+.game-title {
+  font-family: var(--font-title);
+  font-size: clamp(2.4rem, 9vw, 5rem);
+  line-height: .95;
+  text-align: center;
+  letter-spacing: 2px;
+  margin: .15em 0 .1em;
+  transform: rotate(-2deg);
+  background: linear-gradient(180deg, var(--yellow) 0%, var(--orange) 55%, var(--red) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(4px 4px 0 var(--ink));
+}
+.subtitle {
+  text-align: center;
+  font-size: clamp(.9rem, 2.6vw, 1.15rem);
+  opacity: .9;
+  margin: 0 0 clamp(10px, 2.4vw, 20px);
+}
+
+/* ==========================================================================
+   ЭКРАН НАСТРОЙКИ
+   ========================================================================== */
+#screen-setup { align-items: center; justify-content: center; }
+.setup-box {
+  width: min(680px, 100%);
+  padding: clamp(14px, 3vw, 26px);
+  transform: rotate(.6deg);
+}
+.setup-label {
+  font-family: var(--font-title);
+  font-size: clamp(1.1rem, 3.6vw, 1.5rem);
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+  margin: 0 0 .4em;
+  text-align: center;
+}
+.count-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: clamp(14px, 3vw, 22px);
+}
+.count-btn {
+  font-family: var(--font-title);
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  width: 60px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink);
+  background: #fff;
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.count-btn:hover  { transform: translate(-3px,-3px); box-shadow: 9px 9px 0 var(--ink); }
+.count-btn:active { transform: translate(4px,4px);  box-shadow: 2px 2px 0 var(--ink); }
+.count-btn.sel { background: var(--yellow); transform: translate(2px,2px) rotate(-2deg); box-shadow: 3px 3px 0 var(--ink); }
+.count-btn.solo { width: 92px; font-size: clamp(.85rem, 2.6vw, 1.05rem); }
+
+#nameList { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.name-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.1);
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  padding: 6px 10px;
+}
+.name-row .ava { font-size: 1.7rem; line-height: 1; }
+.name-row input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  font-family: var(--font-text);
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 8px 2px;
+  min-height: 44px;
+}
+.name-row input::placeholder { color: rgba(255,255,255,.5); }
+
+.setup-actions { display: flex; justify-content: center; margin-top: clamp(16px, 3.5vw, 26px); }
+.rules {
+  margin: clamp(14px, 3vw, 22px) auto 0;
+  width: min(680px, 100%);
+  padding: clamp(12px, 2.6vw, 18px);
+  font-size: clamp(.85rem, 2.4vw, 1rem);
+  line-height: 1.5;
+  transform: rotate(-.7deg);
+}
+.rules b { color: var(--yellow); }
+
+/* ==========================================================================
+   ЭКРАН ИГРЫ
+   ========================================================================== */
+/* снизу зарезервирована полоса под всплывающую подсказку,
+   чтобы она никогда не накрывала кнопки ✅ / ❌ */
+#screen-game { gap: clamp(8px, 1.8vw, 16px); padding-bottom: 84px; }
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hud-chip {
+  font-family: var(--font-title);
+  letter-spacing: 1px;
+  font-size: clamp(.85rem, 2.6vw, 1.15rem);
+  padding: 5px 14px;
+  background: rgba(255,255,255,.12);
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 var(--ink);
+  white-space: nowrap;
+}
+.hud-chip.hot { background: var(--red); }
+
+/* --- ФИТИЛЬ: линия, которая укорачивается, с искрой на конце --- */
+.fuse-wrap {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 0 22px;
+}
+.fuse-track {
+  position: relative;
+  height: 24px;
+  border: 5px solid var(--ink);
+  border-radius: 999px;
+  background: repeating-linear-gradient(45deg, #2a2340 0 9px, #1e1832 9px 18px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.fuse-line {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 100%;
+  border-radius: 999px;
+  background: repeating-linear-gradient(45deg, #c98a45 0 9px, #94612a 9px 18px);
+  transition: width .22s cubic-bezier(.2,.9,.3,1);
+}
+.fuse-spark {
+  position: absolute;
+  right: -17px; top: 50%;
+  width: 34px; height: 34px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, var(--yellow) 30%, var(--orange) 55%, rgba(255,68,68,.5) 70%, transparent 76%);
+  animation: sparkFlick .13s infinite alternate;
+}
+@keyframes sparkFlick {
+  from { transform: scale(.82); opacity: .85; }
+  to   { transform: scale(1.18); opacity: 1; }
+}
+
+/* --- РЯД ИГРОКОВ --- */
+.players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.8vw, 16px);
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 46px; /* место, чтобы бомба «висела» над аватаркой */
+}
+.pcard {
+  width: clamp(84px, 15vw, 128px);
+  padding: 8px 6px 10px;
+  text-align: center;
+  background: rgba(255,255,255,.12);
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  transform: rotate(-1.5deg);
+  transition: transform .2s cubic-bezier(0.68,-0.55,0.265,1.55), background .25s ease, box-shadow .2s ease, opacity .3s ease;
+}
+.pcard:nth-child(even) { transform: rotate(1.5deg); }
+.pcard .pava { font-size: clamp(1.9rem, 5.5vw, 2.8rem); line-height: 1.05; }
+.pcard .pname {
+  font-family: var(--font-title);
+  letter-spacing: .8px;
+  font-size: clamp(.8rem, 2.4vw, 1.05rem);
+  margin-top: 2px;
+  word-break: break-word;
+}
+.pcard .pscore { font-size: .78rem; opacity: .8; }
+.pcard.active {
+  background: var(--yellow);
+  color: var(--ink);
+  transform: rotate(0deg) scale(1.09);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.pcard.dead {
+  background: #0b0916;
+  color: #6b6480;
+  opacity: .72;
+  transform: rotate(3deg) scale(.9);
+  box-shadow: 4px 4px 0 #000;
+  filter: grayscale(1);
+}
+.pcard.dead .pname { text-decoration: line-through; }
+.pcard.bumped { animation: bump .3s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes bump {
+  0% { transform: rotate(0deg) scale(1.09); }
+  45% { transform: rotate(-4deg) scale(1.22); }
+  100% { transform: rotate(0deg) scale(1.09); }
+}
+
+/* --- КАРТОЧКА ЗАДАНИЯ --- */
+.qzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(10px, 2.2vw, 18px);
+  width: 100%;
+}
+.qcard {
+  width: min(760px, 100%);
+  padding: clamp(16px, 3.6vw, 30px) clamp(14px, 3vw, 26px);
+  text-align: center;
+  background: rgba(255,255,255,.95);
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  transform: rotate(-1deg);
+  position: relative;
+}
+.qcard.pop { animation: qpop .3s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes qpop {
+  0%   { transform: rotate(-1deg) scale(.86); opacity: .3; }
+  60%  { transform: rotate(1.5deg) scale(1.05); opacity: 1; }
+  100% { transform: rotate(-1deg) scale(1); }
+}
+.q-who {
+  font-family: var(--font-title);
+  letter-spacing: 1.4px;
+  font-size: clamp(.95rem, 3vw, 1.3rem);
+  color: var(--pink);
+  margin-bottom: .25em;
+}
+.q-prompt {
+  font-family: var(--font-title);
+  letter-spacing: 1.6px;
+  font-size: clamp(1.7rem, 6.5vw, 3.2rem);
+  line-height: 1.06;
+}
+.q-hintline {
+  margin-top: .5em;
+  font-size: clamp(.78rem, 2.3vw, .95rem);
+  opacity: .7;
+}
+.peek {
+  margin-top: .6em;
+  font-family: var(--font-title);
+  letter-spacing: 1px;
+  font-size: clamp(.85rem, 2.6vw, 1.05rem);
+  padding: 6px 14px;
+  min-height: 44px;
+  background: var(--cyan);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.peek:hover  { transform: translate(-3px,-3px); box-shadow: 7px 7px 0 var(--ink); }
+.peek:active { transform: translate(3px,3px);  box-shadow: 2px 2px 0 var(--ink); }
+.peek.shown { background: var(--green); }
+
+.verdict {
+  display: flex;
+  gap: clamp(12px, 3vw, 26px);
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+}
+.vbtn {
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1;
+  padding: .35em .85em;
+  min-height: 74px;
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.vbtn small {
+  display: block;
+  font-family: var(--font-title);
+  letter-spacing: 1.2px;
+  font-size: clamp(.7rem, 2.2vw, .95rem);
+  margin-top: .15em;
+}
+.vbtn.ok  { background: var(--green); color: var(--ink); transform: rotate(-2deg); }
+.vbtn.no  { background: var(--red);   color: #fff;      transform: rotate(2deg); }
+.vbtn.ok:hover  { transform: translate(-3px,-3px) rotate(-2deg); box-shadow: 9px 9px 0 var(--ink); }
+.vbtn.no:hover  { transform: translate(-3px,-3px) rotate(2deg);  box-shadow: 9px 9px 0 var(--ink); }
+.vbtn.ok:active { transform: translate(4px,4px) rotate(-2deg);   box-shadow: 2px 2px 0 var(--ink); }
+.vbtn.no:active { transform: translate(4px,4px) rotate(2deg);    box-shadow: 2px 2px 0 var(--ink); }
+.vbtn[disabled] { opacity: .4; pointer-events: none; }
+
+/* подсказка после ошибки — всплывает, темп не тормозит */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%) translateY(140%);
+  width: min(560px, calc(100% - 24px));
+  padding: 10px 16px;
+  background: var(--pink);
+  color: #fff;
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  font-size: clamp(.8rem, 2.4vw, .98rem);
+  line-height: 1.35;
+  z-index: 70;
+  transition: transform .3s cubic-bezier(0.68,-0.55,0.265,1.55);
+  pointer-events: none;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast b { font-family: var(--font-title); letter-spacing: 1px; font-size: 1.15em; }
+
+/* ==========================================================================
+   БОМБА
+   ========================================================================== */
+#bomb {
+  position: fixed;
+  left: 0; top: 0;
+  width: 92px; height: 92px;
+  z-index: 40;
+  pointer-events: none;
+  display: none;
+  will-change: transform;
+}
+#bomb.on { display: block; }
+.bomb-inner {
+  position: relative;
+  width: 100%; height: 100%;
+  animation: bombSway 2.4s ease-in-out infinite;
+}
+.bomb-body {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #6d6a80 0%, #2b2740 34%, #100d1e 72%),
+    #0c0a16;
+  border: 4px solid var(--ink);
+  box-shadow:
+    0 0 calc(6px + var(--heat) * 44px) calc(1px + var(--heat) * 12px) rgba(255, 68, 68, calc(.15 + var(--heat) * .85)),
+    inset -6px -8px 14px rgba(0,0,0,.7);
+  animation: bombPulse var(--pulse-dur) ease-in-out infinite;
+}
+/* раскалённая докрасна поверхность на последних секундах */
+.bomb-heat {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 62%, rgba(255,68,68,.95) 0%, rgba(255,159,28,.55) 42%, transparent 70%);
+  opacity: var(--heat);
+  pointer-events: none;
+}
+.bomb-shine {
+  position: absolute;
+  left: 27%; top: 22%;
+  width: 24%; height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.92) 0%, rgba(255,255,255,.2) 60%, transparent 75%);
+  transform: rotate(-25deg);
+}
+.bomb-cap {
+  position: absolute;
+  left: 50%; top: 2px;
+  width: 22px; height: 16px;
+  margin-left: -11px;
+  background: #4a4560;
+  border: 4px solid var(--ink);
+  border-radius: 5px 5px 2px 2px;
+}
+.bomb-wick {
+  position: absolute;
+  left: 50%; top: -12px;
+  width: 5px; height: 18px;
+  margin-left: -2px;
+  background: #c98a45;
+  border-radius: 3px;
+  transform: rotate(18deg);
+  transform-origin: bottom center;
+}
+.bomb-wick::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: -9px;
+  width: 16px; height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, var(--yellow) 35%, var(--orange) 62%, transparent 74%);
+  animation: sparkFlick .12s infinite alternate;
+}
+@keyframes bombSway {
+  0%,100% { transform: rotate(-6deg) translateY(0); }
+  50%     { transform: rotate(6deg) translateY(-5px); }
+}
+@keyframes bombPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.09); }
+}
+/* последние 10 секунд — бомбу откровенно дёргает */
+#bomb.critical .bomb-inner { animation: bombPanic .12s linear infinite; }
+@keyframes bombPanic {
+  0%   { transform: translate(-3px, 2px) rotate(-7deg); }
+  25%  { transform: translate(3px, -3px) rotate(6deg); }
+  50%  { transform: translate(-2px, -2px) rotate(-5deg); }
+  75%  { transform: translate(3px, 2px) rotate(7deg); }
+  100% { transform: translate(-3px, 2px) rotate(-7deg); }
+}
+/* подскок в руках при ошибке */
+#bomb.jolt .bomb-inner { animation: bombJolt .34s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes bombJolt {
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  35%  { transform: translateY(-38px) scale(1.3) rotate(-16deg); }
+  70%  { transform: translateY(6px) scale(.92) rotate(10deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* ==========================================================================
+   СЛОИ ЭФФЕКТОВ
+   ========================================================================== */
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 55; overflow: hidden; }
+.p {
+  position: absolute;
+  width: var(--s, 12px);
+  height: var(--s, 12px);
+  border-radius: 50%;
+  animation: pfly var(--d, 900ms) cubic-bezier(.15,.6,.4,1) forwards;
+}
+@keyframes pfly {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx,0), var(--dy,0)) scale(.15); opacity: 0; }
+}
+.p.sq { border-radius: 3px; }
+
+/* виньетка — красная пульсация по краям в такт тиканью */
+#vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  opacity: 0;
+  box-shadow: inset 0 0 min(24vh, 190px) min(6vh, 46px) rgba(255,40,40,.95);
+  transition: opacity .1s linear;
+}
+/* белая вспышка взрыва */
+#flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+  background: #fff;
+  opacity: 0;
+}
+#flash.go { animation: flashOut .55s ease-out forwards; }
+@keyframes flashOut {
+  0%   { opacity: 1; }
+  22%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* надпись во весь экран */
+#bigText {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 85;
+  padding: 4vw;
+}
+#bigText.on { display: flex; }
+#bigText span {
+  font-family: var(--font-title);
+  font-size: clamp(4rem, 16vw, 9rem);
+  line-height: .92;
+  text-align: center;
+  letter-spacing: 3px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--yellow);
+  -webkit-text-stroke: 3px var(--ink);
+  text-shadow: 7px 7px 0 var(--ink);
+  animation: bigPop .55s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+#bigText.red span   { color: var(--red); }
+#bigText.green span { color: var(--green); }
+#bigText.gold span  { color: var(--gold); }
+@keyframes bigPop {
+  0%   { transform: scale(.2) rotate(-14deg); opacity: 0; }
+  60%  { transform: scale(1.22) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-2deg); }
+}
+
+/* тряска экрана */
+.screen-shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+  10%,90% { transform: translate(-4px, 2px); }
+  20%,80% { transform: translate(7px, -4px); }
+  30%,50%,70% { transform: translate(-11px, 5px); }
+  40%,60% { transform: translate(11px, -5px); }
+}
+/* максимальная тряска на взрыве — сильнее и дольше */
+.screen-shake-boom { animation: shakeBoom .8s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shakeBoom {
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  6%  { transform: translate(-22px, 14px) rotate(-1.6deg); }
+  13% { transform: translate(24px, -16px) rotate(1.6deg); }
+  22% { transform: translate(-20px, -12px) rotate(-1.2deg); }
+  31% { transform: translate(19px, 15px) rotate(1.2deg); }
+  42% { transform: translate(-15px, 9px) rotate(-.9deg); }
+  53% { transform: translate(13px, -10px) rotate(.9deg); }
+  65% { transform: translate(-9px, 6px) rotate(-.6deg); }
+  78% { transform: translate(6px, -5px) rotate(.4deg); }
+  90% { transform: translate(-3px, 2px) rotate(-.2deg); }
+}
+
+/* ==========================================================================
+   ФИНАЛЬНЫЙ ЭКРАН
+   ========================================================================== */
+#screen-final { align-items: center; justify-content: center; text-align: center; }
+.final-box {
+  width: min(660px, 100%);
+  padding: clamp(18px, 4vw, 32px);
+  transform: rotate(-1deg);
+}
+.final-kicker {
+  font-family: var(--font-title);
+  letter-spacing: 2px;
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  color: var(--cyan);
+  margin: 0;
+}
+.final-name {
+  font-family: var(--font-title);
+  font-size: clamp(2.6rem, 12vw, 6.5rem);
+  line-height: .95;
+  letter-spacing: 2px;
+  margin: .1em 0 .15em;
+  color: var(--gold);
+  -webkit-text-stroke: 3px var(--ink);
+  text-shadow: 6px 6px 0 var(--ink);
+  word-break: break-word;
+}
+.final-stats {
+  font-size: clamp(.92rem, 2.8vw, 1.15rem);
+  line-height: 1.6;
+  background: rgba(0,0,0,.3);
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 0 0 clamp(14px, 3vw, 22px);
+}
+.final-stats b { color: var(--yellow); font-size: 1.15em; font-family: var(--font-title); letter-spacing: 1px; }
+.record-line {
+  font-family: var(--font-title);
+  letter-spacing: 1.4px;
+  font-size: clamp(1rem, 3.4vw, 1.4rem);
+  color: var(--green);
+  margin: 0 0 clamp(12px, 2.6vw, 18px);
+}
+.record-line.beat { color: var(--gold); }
+.final-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* кнопка звука */
+#soundBtn {
+  position: fixed;
+  right: 12px; top: 12px;
+  z-index: 90;
+  width: 52px; height: 52px;
+  font-size: 1.35rem;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cyan);
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 5px 5px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+#soundBtn:hover  { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 var(--ink); }
+#soundBtn:active { transform: translate(4px,4px);  box-shadow: 2px 2px 0 var(--ink); }
+#soundBtn.off { background: #6b6480; }
+
+/* совсем низкий экран (телефон боком): подсказке внизу места нет —
+   уводим её наверх, лишь бы не накрывала ✅ / ❌ */
+@media (max-height: 480px) {
+  #toast {
+    left: auto; right: 8px; bottom: auto; top: 6px;
+    width: min(340px, 56vw);
+    transform: translateY(-170%);
+    padding: 7px 12px;
+    font-size: .8rem;
+  }
+  #toast.show { transform: translateY(0); }
+  #screen-game { padding-bottom: 6px; }
+  .players { padding-top: 26px; }
+  #bomb { width: 56px; height: 56px; }
+}
+
+/* низкий экран (ландшафтный телефон, маленький ноутбук): ужимаем всё,
+   чтобы кнопки ✅ / ❌ и подсказка помещались без наложения */
+@media (max-height: 700px) {
+  #app { padding: 8px; }
+  #screen-game { gap: 7px; padding-bottom: 74px; }
+  .players { padding-top: 32px; }
+  .pcard { width: clamp(70px, 11vw, 100px); padding: 5px 4px 6px; }
+  .pcard .pava { font-size: clamp(1.4rem, 4vw, 2rem); }
+  .pcard .pscore { font-size: .68rem; }
+  .qzone { gap: 8px; }
+  .qcard { padding: clamp(9px, 1.8vw, 15px) clamp(12px, 2.4vw, 20px); }
+  .q-prompt { font-size: clamp(1.3rem, 4.6vw, 2.2rem); }
+  .q-hintline { display: none; }
+  .peek { margin-top: .35em; min-height: 40px; padding: 4px 12px; }
+  .vbtn { font-size: clamp(1.4rem, 4.6vw, 2.1rem); padding: .2em .7em; min-height: 58px; }
+  .fuse-track { height: 18px; }
+  #bomb { width: 68px; height: 68px; }
+}
+
+/* на узких экранах кнопка звука не должна наезжать на плашки HUD */
+@media (max-width: 620px) {
+  .hud { padding-right: 56px; }
+  .game-title { padding-right: 46px; }
+}
+@media (max-width: 420px) {
+  #soundBtn { width: 46px; height: 46px; font-size: 1.15rem; right: 8px; top: 8px; }
+  .hud { padding-right: 48px; }
+  .players { padding-top: 38px; }
+  #bomb { width: 74px; height: 74px; }
+  #screen-game { padding-bottom: 78px; }
+}
+
+/* ==========================================================================
+   БЕРЕЖНЫЙ РЕЖИМ: убираем тряску, разлёт и пульсацию виньетки,
+   но ОСТАВЛЯЕМ тиканье и цветовую индикацию — иначе игра теряет смысл
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .screen-shake, .screen-shake-boom { animation: none !important; }
+  .bomb-inner { animation: none !important; }
+  #bomb.critical .bomb-inner, #bomb.jolt .bomb-inner { animation: none !important; }
+  .p { animation: none !important; display: none !important; }
+  #bigText span { animation: none !important; }
+  .qcard.pop, .pcard.bumped { animation: none !important; }
+  .fuse-spark, .bomb-wick::after { animation: none !important; }
+  #vignette { transition: opacity .35s linear; }
+  #flash.go { animation: flashOut .35s linear forwards; }
+  .btn, .vbtn, .count-btn, .peek, #soundBtn { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<button id="soundBtn" type="button" aria-label="Звук вкл/выкл">🔊</button>
+
+<div id="app">
+
+  <!-- ================= ЭКРАН НАСТРОЙКИ ================= -->
+  <section id="screen-setup" class="screen on">
+    <h1 class="game-title">💣 ГОРЯЧАЯ БОМБА</h1>
+    <p class="subtitle">Отвечай быстро и сплавь бомбу соседу. Кто держит — тот и бабахнет.</p>
+
+    <div class="setup-box panel">
+      <p class="setup-label">Сколько игроков?</p>
+      <div class="count-row" id="countRow"></div>
+      <p class="setup-label">Как вас зовут?</p>
+      <div id="nameList"></div>
+      <div class="setup-actions">
+        <button class="btn red" id="startBtn" type="button">🔥 ПОДЖИГАЕМ!</button>
+      </div>
+    </div>
+
+    <div class="rules panel">
+      <b>Как играть.</b> Бомба у одного игрока — ему задание, он отвечает вслух.
+      Учитель жмёт <b>✅</b> — бомба улетает к следующему. Жмёт <b>❌</b> — бомба остаётся,
+      а фитиль горит <b>быстрее</b>. Сколько времени осталось — не знает никто.
+    </div>
+  </section>
+
+  <!-- ================= ЭКРАН ИГРЫ ================= -->
+  <section id="screen-game" class="screen">
+    <div class="hud">
+      <div class="hud-chip" id="chipRound">Круг 1</div>
+      <div class="hud-chip" id="chipAlive">В игре: 4</div>
+      <div class="hud-chip" id="chipSpeed">Фитиль ×1.0</div>
+    </div>
+
+    <div class="fuse-wrap">
+      <div class="fuse-track">
+        <div class="fuse-line" id="fuseLine"><div class="fuse-spark" id="fuseSpark"></div></div>
+      </div>
+    </div>
+
+    <div class="players" id="players"></div>
+
+    <div class="qzone">
+      <div class="qcard" id="qcard">
+        <div class="q-who" id="qWho">ХОДИТ: ИГРОК 1</div>
+        <div class="q-prompt" id="qPrompt">ich + machen</div>
+        <div class="q-hintline">Скажи форму вслух — быстро!</div>
+        <button class="peek" id="peekBtn" type="button">👁 показать ответ</button>
+      </div>
+
+      <div class="verdict">
+        <button class="vbtn ok" id="btnOk" type="button">✅<small>верно</small></button>
+        <button class="vbtn no" id="btnNo" type="button">❌<small>мимо</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ФИНАЛ ================= -->
+  <section id="screen-final" class="screen">
+    <div class="final-box panel">
+      <p class="final-kicker" id="finalKicker">ВЫЖИЛ!</p>
+      <div class="final-name" id="finalName">Игрок 1</div>
+      <div class="record-line" id="recordLine" hidden></div>
+      <div class="final-stats" id="finalStats"></div>
+      <div class="final-actions">
+        <button class="btn green" id="againBtn" type="button">🔄 Ещё разок</button>
+        <button class="btn cyan" id="othersBtn" type="button">👥 Другие игроки</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- бомба живёт вне потока: она летает по всему экрану -->
+<div id="bomb">
+  <div class="bomb-inner">
+    <div class="bomb-body"></div>
+    <div class="bomb-heat"></div>
+    <div class="bomb-shine"></div>
+    <div class="bomb-cap"></div>
+    <div class="bomb-wick"></div>
+  </div>
+</div>
+
+<div id="fx"></div>
+<div id="vignette"></div>
+<div id="flash"></div>
+<div id="bigText"><span></span></div>
+<div id="toast"></div>
+
+<script>
+// ⬇️ ЗАМЕНИ ЭТОТ СПИСОК, ЧТОБЫ ИГРАТЬ В ЛЮБУЮ ДРУГУЮ ТЕМУ.
+// Формат: prompt — что показываем, answer — правильный ответ, hint — объяснение правила.
+const QUESTIONS = [
+  {prompt: "ich + machen (делать)",      answer: "ich mache",   hint: "После ich → окончание -e. Основа mach- + e = mache"},
+  {prompt: "du + spielen (играть)",      answer: "du spielst",  hint: "После du → окончание -st. Основа spiel- + st = spielst"},
+  {prompt: "er + lernen (учить)",        answer: "er lernt",    hint: "После er/sie/es → окончание -t. Основа lern- + t = lernt"},
+  {prompt: "sie + malen (рисовать)",     answer: "sie malt",    hint: "После sie (она) → окончание -t. Основа mal- + t = malt"},
+  {prompt: "es + kommen (приходить)",    answer: "es kommt",    hint: "После es → окончание -t. Основа komm- + t = kommt"},
+  {prompt: "wir + wohnen (жить)",        answer: "wir wohnen",  hint: "После wir → окончание -en, как инфинитив. wohn- + en = wohnen"},
+  {prompt: "ihr + singen (петь)",        answer: "ihr singt",   hint: "После ihr → окончание -t. Основа sing- + t = singt"},
+  {prompt: "sie + trinken (пить)",       answer: "sie trinken", hint: "После sie (они) → окончание -en. Основа trink- + en = trinken"},
+  {prompt: "du + heißen (зваться)",      answer: "du heißt",    hint: "⚠️ ХИТРО! Основа уже кончается на ß (heiß-), поэтому только -t, а не -st. du heißt, НЕ du heißst"},
+  {prompt: "ihr + tanzen (танцевать)",   answer: "ihr tanzt",   hint: "Основа tanz- + t = tanzt. Произносим «танцт»"},
+  {prompt: "ich + sein (быть)",          answer: "ich bin",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ глагол! Учим наизусть: ich BIN"},
+  {prompt: "du + sein (быть)",           answer: "du bist",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: du BIST"},
+  {prompt: "er + sein (быть)",           answer: "er ist",      hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: er/sie/es IST"},
+  {prompt: "wir + sein (быть)",          answer: "wir sind",    hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! wir SIND"},
+  {prompt: "ich + haben (иметь)",        answer: "ich habe",    hint: "В форме ich окончание обычное: hab- + e = habe"},
+  {prompt: "du + haben (иметь)",         answer: "du hast",     hint: "🌟 haben — НЕПРАВИЛЬНЫЙ в du и er! Буква -b- ПРОПАДАЕТ: du HAST (не habst)"},
+  {prompt: "er + haben (иметь)",         answer: "er hat",      hint: "🌟 haben — НЕПРАВИЛЬНЫЙ! Буква -b- ПРОПАДАЕТ: er HAT (не habt)"},
+  {prompt: "ihr + haben (иметь)",        answer: "ihr habt",    hint: "У ihr всё честно: hab- + t = habt"},
+  {prompt: "du + arbeiten (работать)",   answer: "du arbeitest",hint: "⚠️ Основа кончается на -t (arbeit-), между основой и окончанием вставляем -e-: arbeit-e-st"},
+  {prompt: "er + finden (находить)",     answer: "er findet",   hint: "⚠️ Основа кончается на -d (find-), вставляем -e-: find-e-t = findet"},
+  {prompt: "wir + gehen (идти)",         answer: "wir gehen",   hint: "После wir → -en. geh- + en = gehen"},
+  {prompt: "ihr + lesen (читать)",       answer: "ihr lest",    hint: "Основа кончается на -s (les-), поэтому только -t: lest"},
+  {prompt: "du + fahren (ехать)",        answer: "du fährst",   hint: "🌟 Корневая гласная меняется: a → ä. du FÄHRST"},
+  {prompt: "er + sprechen (говорить)",   answer: "er spricht",  hint: "🌟 Корневая гласная меняется: e → i. er SPRICHT"}
+];
+
+(function () {
+"use strict";
+
+/* ==========================================================================
+   0. КОРОТКИЕ ХЕЛПЕРЫ
+   ========================================================================== */
+const $ = function (id) { return document.getElementById(id); };
+const clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+const rnd = function (a, b) { return a + Math.random() * (b - a); };
+const REDUCE = (function () {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (e) { return false; }
+})();
+
+/* --- реестр всех таймеров: чистим при рестарте, взрыве и уходе со страницы --- */
+const TIMERS = new Set();
+function later(fn, ms) {
+  const id = setTimeout(function () { TIMERS.delete(id); fn(); }, ms);
+  TIMERS.add(id);
+  return id;
+}
+function clearTimers() {
+  TIMERS.forEach(function (id) { clearTimeout(id); });
+  TIMERS.clear();
+}
+
+/* ==========================================================================
+   1. ЗВУК — Web Audio, контекст создаётся лениво по первому жесту
+   ========================================================================== */
+let AC = null;
+let masterGain = null;
+let soundOn = true;
+try { soundOn = localStorage.getItem('bomba_sound') !== 'off'; } catch (e) { soundOn = true; }
+
+function audio() {
+  if (AC) {
+    try { if (AC.state === 'suspended') { AC.resume(); } } catch (e) { /* не критично */ }
+    return AC;
+  }
+  try {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) { return null; }
+    AC = new Ctor();
+    masterGain = AC.createGain();
+    masterGain.gain.value = 0.85;
+    masterGain.connect(AC.destination);
+  } catch (e) {
+    AC = null;
+  }
+  return AC;
+}
+
+/* простой тон с огибающей */
+function tone(freq, dur, type, vol, slideTo, delay) {
+  if (!soundOn) { return; }
+  const ctx = audio();
+  if (!ctx) { return; }
+  try {
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo) { osc.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), t0 + dur); }
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol == null ? 0.2 : vol), t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.03);
+  } catch (e) { /* звук не обязателен для игры */ }
+}
+
+/* буфер белого шума */
+function noiseBuffer(ctx, seconds) {
+  const len = Math.floor(ctx.sampleRate * seconds);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) { data[i] = Math.random() * 2 - 1; }
+  return buf;
+}
+
+/* шумовой всплеск с фильтром — для «вжух» и взрыва */
+function noise(dur, vol, filterType, f0, f1) {
+  if (!soundOn) { return; }
+  const ctx = audio();
+  if (!ctx) { return; }
+  try {
+    const t0 = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuffer(ctx, dur);
+    const flt = ctx.createBiquadFilter();
+    flt.type = filterType || 'bandpass';
+    flt.frequency.setValueAtTime(f0, t0);
+    flt.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t0 + dur);
+    flt.Q.value = 1.1;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(flt);
+    flt.connect(g);
+    g.connect(masterGain);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  } catch (e) { /* см. выше */ }
+}
+
+const SFX = {
+  click: function () { tone(430, 0.07, 'square', 0.14); },
+  /* тик фитиля: чем ближе взрыв — тем выше и суше */
+  tick: function (urgency, alarm) {
+    if (!soundOn) { return; }
+    const f = 460 + urgency * 700;
+    tone(alarm ? f * 1.25 : f, alarm ? 0.045 : 0.06, 'square', 0.1 + urgency * 0.1);
+    if (alarm) { tone(f * 0.62, 0.05, 'triangle', 0.09, null, 0.045); }
+  },
+  /* успех — восходящее арпеджио */
+  good: function () {
+    tone(523, 0.09, 'square', 0.16);
+    tone(659, 0.09, 'square', 0.16, null, 0.06);
+    tone(880, 0.14, 'square', 0.16, null, 0.12);
+  },
+  /* провал — низкий нисходящий */
+  bad: function () {
+    tone(220, 0.3, 'sawtooth', 0.2, 90);
+    tone(150, 0.34, 'square', 0.13, 70, 0.03);
+  },
+  /* «вжух» — бомба летит по дуге */
+  whoosh: function () {
+    noise(0.34, 0.22, 'bandpass', 380, 2400);
+    tone(300, 0.3, 'sine', 0.1, 900);
+  },
+  /* ВЗРЫВ — шум + низкая синусоида с затуханием */
+  boom: function () {
+    if (!soundOn) { return; }
+    noise(1.5, 0.75, 'lowpass', 2600, 60);
+    tone(120, 1.25, 'sine', 0.55, 26);
+    tone(62, 1.6, 'sine', 0.45, 18);
+    tone(190, 0.5, 'sawtooth', 0.22, 40);
+  },
+  /* финальный фанфар */
+  fanfare: function () {
+    const notes = [523, 659, 784, 1047, 1319];
+    for (let i = 0; i < notes.length; i++) {
+      tone(notes[i], 0.3, 'square', 0.18, null, i * 0.11);
+    }
+    tone(1568, 0.6, 'triangle', 0.16, null, 0.58);
+  },
+  /* отдельный громкий отклик на рекорд */
+  record: function () {
+    const notes = [784, 988, 1175, 1568, 1976];
+    for (let i = 0; i < notes.length; i++) {
+      tone(notes[i], 0.26, 'sawtooth', 0.16, null, i * 0.085);
+    }
+    tone(2093, 0.7, 'square', 0.15, null, 0.45);
+  }
+};
+
+/* кнопка 🔊 / 🔇 */
+const soundBtn = $('soundBtn');
+function paintSound() {
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.classList.toggle('off', !soundOn);
+}
+paintSound();
+soundBtn.addEventListener('click', function () {
+  soundOn = !soundOn;
+  try { localStorage.setItem('bomba_sound', soundOn ? 'on' : 'off'); } catch (e) { /* приват-режим */ }
+  paintSound();
+  if (soundOn) { SFX.click(); }
+});
+
+/* ==========================================================================
+   2. ЭФФЕКТЫ: частицы, тряска, вспышка, надпись во весь экран
+   ========================================================================== */
+const fxLayer = $('fx');
+const bigText = $('bigText');
+const bigTextSpan = bigText.querySelector('span');
+const flash = $('flash');
+const vignette = $('vignette');
+
+const PALETTE = ['#FFD93D', '#FF3D8B', '#4ECDC4', '#95E061', '#FF9F1C', '#FF4444', '#FFDC5C', '#ffffff'];
+
+/* одна частица; сама убирается из DOM после анимации */
+function particle(x, y, opt) {
+  if (REDUCE) { return; }
+  const o = opt || {};
+  const el = document.createElement('div');
+  el.className = 'p' + (Math.random() < 0.4 ? ' sq' : '');
+  const size = o.size || rnd(7, 17);
+  const dur = o.dur || rnd(650, 1250);
+  el.style.setProperty('--s', size + 'px');
+  el.style.setProperty('--d', dur + 'ms');
+  el.style.setProperty('--dx', (o.dx || 0) + 'px');
+  el.style.setProperty('--dy', (o.dy || 0) + 'px');
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.background = o.color || PALETTE[Math.floor(Math.random() * PALETTE.length)];
+  fxLayer.appendChild(el);
+  const kill = function () { if (el.parentNode) { el.parentNode.removeChild(el); } };
+  el.addEventListener('animationend', kill);
+  later(kill, dur + 220); /* страховка, если animationend не прилетит */
+}
+
+/* веер частиц из точки */
+function burst(x, y, count, spread, palette) {
+  if (REDUCE) { return; }
+  for (let i = 0; i < count; i++) {
+    const a = rnd(0, Math.PI * 2);
+    const d = rnd(spread * 0.25, spread);
+    particle(x, y, {
+      dx: Math.cos(a) * d,
+      dy: Math.sin(a) * d + rnd(20, 90),
+      color: palette ? palette[Math.floor(Math.random() * palette.length)] : null,
+      size: rnd(8, 20),
+      dur: rnd(700, 1400)
+    });
+  }
+}
+
+/* искры, сыплющиеся вниз (фитиль и след бомбы) */
+function sparks(x, y, count) {
+  if (REDUCE) { return; }
+  for (let i = 0; i < count; i++) {
+    particle(x, y, {
+      dx: rnd(-26, 26),
+      dy: rnd(45, 130),
+      color: ['#FFD93D', '#FF9F1C', '#FF4444', '#ffffff'][Math.floor(Math.random() * 4)],
+      size: rnd(4, 9),
+      dur: rnd(340, 700)
+    });
+  }
+}
+
+let shakeTimer = 0;
+function shake(strong) {
+  if (REDUCE) { return; }
+  const cls = strong ? 'screen-shake-boom' : 'screen-shake';
+  document.body.classList.remove('screen-shake', 'screen-shake-boom');
+  /* перезапуск анимации */
+  void document.body.offsetWidth;
+  document.body.classList.add(cls);
+  clearTimeout(shakeTimer);
+  TIMERS.delete(shakeTimer);
+  shakeTimer = later(function () {
+    document.body.classList.remove('screen-shake', 'screen-shake-boom');
+  }, strong ? 820 : 520);
+}
+
+let bigTimer = 0;
+function showBig(text, color, ms) {
+  bigTextSpan.textContent = text;
+  bigText.className = 'on' + (color ? ' ' + color : '');
+  clearTimeout(bigTimer);
+  TIMERS.delete(bigTimer);
+  bigTimer = later(function () { bigText.className = ''; }, ms || 1000);
+}
+
+function whiteFlash() {
+  flash.classList.remove('go');
+  void flash.offsetWidth;
+  flash.classList.add('go');
+  later(function () { flash.classList.remove('go'); }, 620);
+}
+
+let toastTimer = 0;
+const toastEl = $('toast');
+function toast(html, ms) {
+  toastEl.innerHTML = html;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  TIMERS.delete(toastTimer);
+  toastTimer = later(function () { toastEl.classList.remove('show'); }, ms || 2600);
+}
+
+/* ==========================================================================
+   3. БАНК ЗАДАНИЙ: колода тасуется и заходит на второй круг,
+      сколько бы заданий в списке ни было
+   ========================================================================== */
+const FALLBACK_Q = { prompt: 'Список заданий пуст', answer: '—', hint: 'Добавь задания в массив QUESTIONS.' };
+let deck = [];
+let deckPos = 0;
+
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function resetDeck() { deck = []; deckPos = 0; }
+function drawQuestion() {
+  if (!Array.isArray(QUESTIONS) || QUESTIONS.length === 0) { return FALLBACK_Q; }
+  if (deckPos >= deck.length) { deck = shuffled(QUESTIONS); deckPos = 0; }
+  const q = deck[deckPos];
+  deckPos++;
+  return q || FALLBACK_Q;
+}
+
+/* ==========================================================================
+   4. СОСТОЯНИЕ ИГРЫ
+   ========================================================================== */
+const AVATARS = ['🐻', '🦊', '🐼', '🐸', '🐵', '🦁'];
+const MAX_PLAYERS = 6;
+
+let playerCount = 3;
+const nameDraft = [];
+for (let i = 0; i < MAX_PLAYERS; i++) { nameDraft.push('Игрок ' + (i + 1)); }
+
+const G = {
+  players: [],
+  solo: false,
+  activeIdx: 0,
+  running: false,       /* фитиль горит */
+  busy: false,          /* ход обрабатывается — защита от двойного клика */
+  over: false,
+  total: 60,            /* длина фитиля в «секундах фитиля», СКРЫТА от игроков */
+  burned: 0,
+  speed: 1,             /* ×1.25 накопительно за каждую ошибку */
+  bombNo: 1,
+  round: 1,
+  realElapsed: 0,       /* сколько реально прошло секунд за всю партию */
+  correctTotal: 0,
+  lastQ: FALLBACK_Q,
+  answerShown: false,
+  /* внутренние счётчики цикла */
+  raf: 0,
+  lastTs: 0,
+  tickAcc: 0,
+  tickIv: 1,
+  fuseAcc: 0,
+  fuseFrac: 1,
+  sparkAcc: 0,
+  vigPulse: 0,
+  heat: 0,
+  critical: false,
+  flight: null,
+  pendingBoom: false
+};
+
+/* ==========================================================================
+   5. ЭКРАН НАСТРОЙКИ
+   ========================================================================== */
+const screens = {
+  setup: $('screen-setup'),
+  game: $('screen-game'),
+  final: $('screen-final')
+};
+function showScreen(name) {
+  Object.keys(screens).forEach(function (k) {
+    screens[k].classList.toggle('on', k === name);
+  });
+  bombEl.classList.toggle('on', name === 'game');
+  if (name !== 'game') { vignette.style.opacity = '0'; }
+}
+
+const countRow = $('countRow');
+const nameList = $('nameList');
+
+function buildCountRow() {
+  countRow.innerHTML = '';
+  for (let n = 1; n <= MAX_PLAYERS; n++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'count-btn' + (n === 1 ? ' solo' : '') + (n === playerCount ? ' sel' : '');
+    b.textContent = n === 1 ? '🧍 соло' : String(n);
+    b.addEventListener('click', function () {
+      playerCount = n;
+      SFX.click();
+      buildCountRow();
+      buildNameList();
+    });
+    countRow.appendChild(b);
+  }
+}
+
+function buildNameList() {
+  nameList.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) {
+    const row = document.createElement('div');
+    row.className = 'name-row';
+
+    const ava = document.createElement('div');
+    ava.className = 'ava';
+    ava.textContent = AVATARS[i % AVATARS.length];
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.maxLength = 14;
+    inp.value = nameDraft[i];
+    inp.placeholder = 'Игрок ' + (i + 1);
+    inp.setAttribute('aria-label', 'Имя игрока ' + (i + 1));
+    (function (idx) {
+      inp.addEventListener('input', function () { nameDraft[idx] = inp.value; });
+    })(i);
+
+    row.appendChild(ava);
+    row.appendChild(inp);
+    nameList.appendChild(row);
+  }
+}
+
+buildCountRow();
+buildNameList();
+
+/* ==========================================================================
+   6. ОТРИСОВКА ИГРОКОВ И ЗАДАНИЯ
+   ========================================================================== */
+const playersEl = $('players');
+const qcard = $('qcard');
+const qWho = $('qWho');
+const qPrompt = $('qPrompt');
+const peekBtn = $('peekBtn');
+const chipRound = $('chipRound');
+const chipAlive = $('chipAlive');
+const chipSpeed = $('chipSpeed');
+const bombEl = $('bomb');
+const fuseLine = $('fuseLine');
+const fuseSpark = $('fuseSpark');
+const btnOk = $('btnOk');
+const btnNo = $('btnNo');
+
+function aliveCount() {
+  let n = 0;
+  for (let i = 0; i < G.players.length; i++) { if (G.players[i].alive) { n++; } }
+  return n;
+}
+
+function renderPlayers() {
+  playersEl.innerHTML = '';
+  for (let i = 0; i < G.players.length; i++) {
+    const p = G.players[i];
+    const card = document.createElement('div');
+    card.className = 'pcard' + (p.alive ? '' : ' dead') + (p.alive && i === G.activeIdx ? ' active' : '');
+    card.dataset.idx = String(i);
+
+    const ava = document.createElement('div');
+    ava.className = 'pava';
+    ava.textContent = p.alive ? p.avatar : '😵';
+
+    const nm = document.createElement('div');
+    nm.className = 'pname';
+    nm.textContent = p.name;
+
+    const sc = document.createElement('div');
+    sc.className = 'pscore';
+    sc.textContent = '✅ ' + p.correct;
+
+    card.appendChild(ava);
+    card.appendChild(nm);
+    card.appendChild(sc);
+    playersEl.appendChild(card);
+  }
+}
+
+function cardOf(idx) {
+  return playersEl.querySelector('.pcard[data-idx="' + idx + '"]');
+}
+
+/* точка, где бомба «в руках» у игрока */
+function anchorOf(idx) {
+  const card = cardOf(idx);
+  if (!card) {
+    return { x: window.innerWidth / 2, y: window.innerHeight * 0.3 };
+  }
+  const r = card.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top - 4 };
+}
+
+function placeBomb(x, y, extraScale, rot) {
+  const w = bombEl.offsetWidth || 92;
+  const s = extraScale == null ? 1 : extraScale;
+  /* держим бомбу внутри экрана: фиксированный элемент за правым краем
+     раздувает scrollWidth, а горизонтального скролла быть не должно */
+  const left = clamp(x - w / 2, 0, Math.max(0, document.documentElement.clientWidth - w));
+  const top = clamp(y - w / 2, 0, Math.max(0, window.innerHeight - w));
+  bombEl.style.transform =
+    'translate(' + left + 'px,' + top + 'px) scale(' + s + ')' +
+    (rot ? ' rotate(' + rot + 'deg)' : '');
+}
+
+function showQuestion(pop) {
+  G.lastQ = drawQuestion();
+  G.answerShown = false;
+  const p = G.players[G.activeIdx];
+  qWho.textContent = G.solo ? 'ТВОЙ ХОД' : 'ХОДИТ: ' + (p ? p.name.toUpperCase() : '');
+  qPrompt.textContent = G.lastQ.prompt;
+  peekBtn.textContent = '👁 показать ответ';
+  peekBtn.classList.remove('shown');
+  if (pop && !REDUCE) {
+    qcard.classList.remove('pop');
+    void qcard.offsetWidth;
+    qcard.classList.add('pop');
+  }
+}
+
+function renderHud() {
+  chipRound.textContent = G.solo ? ('Верных: ' + G.correctTotal) : ('Круг ' + G.round);
+  chipAlive.textContent = G.solo ? 'Соло против бомбы' : ('В игре: ' + aliveCount());
+  chipSpeed.textContent = 'Фитиль ×' + G.speed.toFixed(2).replace(/0$/, '');
+  chipSpeed.classList.toggle('hot', G.speed > 1.01);
+}
+
+/* ==========================================================================
+   7. ЦИКЛ ФИТИЛЯ — requestAnimationFrame + отметка времени.
+      Никакого накопления через setInterval, иначе таймер поплывёт.
+   ========================================================================== */
+function tickInterval(remainReal) {
+  let iv;
+  if (remainReal > 30) {
+    iv = 1.0;
+  } else if (remainReal > 10) {
+    iv = 0.36 + ((remainReal - 10) / 20) * 0.64;   /* 1.0 → 0.36 */
+  } else {
+    iv = 0.12 + (Math.max(0, remainReal) / 10) * 0.14; /* 0.26 → 0.12: тревожная дробь */
+  }
+  /* ускорение фитиля должно быть слышно МГНОВЕННО */
+  iv = iv / Math.min(1.7, G.speed);
+  return Math.max(0.09, iv);
+}
+
+function paintFuse() {
+  fuseLine.style.width = (G.fuseFrac * 100).toFixed(2) + '%';
+}
+
+/* фитиль показывает время «примерно» и рывками — точное знание убивает напряжение */
+function updateFuseLook(dt) {
+  G.fuseAcc += dt;
+  const step = 0.42 + Math.random() * 0.35;
+  if (G.fuseAcc < step) { return; }
+  G.fuseAcc = 0;
+
+  const trueFrac = clamp(1 - G.burned / G.total, 0, 1);
+  let target = trueFrac - Math.random() * 0.06 * trueFrac;
+  if (Math.random() < 0.2) { target -= 0.045; }        /* резкий рывок «прогорело» */
+  /* фитиль только укорачивается и не догорает до нуля раньше взрыва */
+  target = clamp(target, 0.015, G.fuseFrac);
+  G.fuseFrac = target;
+  paintFuse();
+}
+
+function frame(ts) {
+  G.raf = requestAnimationFrame(frame);
+  if (!G.lastTs) { G.lastTs = ts; }
+  let dt = (ts - G.lastTs) / 1000;
+  G.lastTs = ts;
+  if (dt > 0.25) { dt = 0.25; }   /* вкладка была свёрнута — не проглатываем время пачкой */
+
+  /* --- полёт бомбы по дуге (параболе) --- */
+  if (G.flight) {
+    const f = G.flight;
+    f.t += dt;
+    const k = clamp(f.t / f.dur, 0, 1);
+    const x = f.x0 + (f.x1 - f.x0) * k;
+    const y = f.y0 + (f.y1 - f.y0) * k - Math.sin(Math.PI * k) * f.arc;
+    placeBomb(x, y, 1 + Math.sin(Math.PI * k) * 0.28, (f.x1 >= f.x0 ? 1 : -1) * k * 360);
+    /* шипящий след из искр */
+    f.sparkAcc += dt;
+    if (f.sparkAcc > 0.03) { f.sparkAcc = 0; sparks(x, y, 2); }
+    if (k >= 1) { finishFlight(); }
+  }
+
+  if (!G.running) { return; }
+
+  /* --- собственно горение --- */
+  G.burned += dt * G.speed;
+  G.realElapsed += dt;
+
+  const remainReal = Math.max(0, (G.total - G.burned) / G.speed);
+
+  /* жар: чем меньше времени — тем краснее и злее */
+  G.heat = clamp(1 - remainReal / 38, 0, 1);
+  document.documentElement.style.setProperty('--heat', G.heat.toFixed(3));
+  document.documentElement.style.setProperty('--pulse-dur', (1.15 - G.heat * 0.95).toFixed(2) + 's');
+
+  const crit = remainReal <= 10;
+  if (crit !== G.critical) {
+    G.critical = crit;
+    bombEl.classList.toggle('critical', crit);
+  }
+
+  /* --- тиканье: интервал сокращается, тон повышается --- */
+  G.tickAcc += dt;
+  if (G.tickAcc >= G.tickIv) {
+    G.tickAcc = 0;
+    G.tickIv = tickInterval(remainReal);
+    const urgency = clamp(1 - remainReal / 45, 0, 1);
+    SFX.tick(urgency, crit);
+    G.vigPulse = 1;
+    if (crit && !REDUCE) { pulseCards(); }
+  }
+
+  /* --- виньетка пульсирует в такт тиканью --- */
+  if (REDUCE) {
+    vignette.style.opacity = (G.heat * 0.4).toFixed(3);
+  } else {
+    G.vigPulse = Math.max(0, G.vigPulse - dt * 3.4);
+    vignette.style.opacity = (G.heat * (0.12 + 0.8 * G.vigPulse)).toFixed(3);
+  }
+
+  /* --- фитиль: длина и сыплющиеся искры --- */
+  updateFuseLook(dt);
+  G.sparkAcc += dt;
+  if (G.sparkAcc > 0.07) {
+    G.sparkAcc = 0;
+    const r = fuseSpark.getBoundingClientRect();
+    sparks(r.left + r.width / 2, r.top + r.height / 2, 1);
+  }
+
+  /* --- бомба в руках у активного игрока --- */
+  if (!G.flight) {
+    const a = anchorOf(G.activeIdx);
+    placeBomb(a.x, a.y);
+  }
+
+  /* --- ВЗРЫВ --- */
+  if (G.burned >= G.total) {
+    if (G.flight) {
+      G.pendingBoom = true;   /* доиграем полёт, рванёт у того, кто ловит */
+      G.running = false;
+    } else {
+      explode();
+    }
+  }
+}
+
+function pulseCards() {
+  const c = cardOf(G.activeIdx);
+  if (!c) { return; }
+  c.classList.remove('bumped');
+  void c.offsetWidth;
+  c.classList.add('bumped');
+}
+
+function startLoop() {
+  stopLoop();
+  G.lastTs = 0;
+  G.raf = requestAnimationFrame(frame);
+}
+function stopLoop() {
+  if (G.raf) { cancelAnimationFrame(G.raf); G.raf = 0; }
+}
+
+/* ==========================================================================
+   8. ХОД ИГРЫ
+   ========================================================================== */
+function lockButtons(v) {
+  btnOk.disabled = v;
+  btnNo.disabled = v;
+}
+
+function nextAlive(from) {
+  const n = G.players.length;
+  for (let s = 1; s <= n; s++) {
+    const i = (from + s) % n;
+    if (G.players[i].alive) {
+      return { idx: i, wrapped: (from + s) >= n };
+    }
+  }
+  return { idx: from, wrapped: false };
+}
+
+/* ✅ — верно: бомба перелетает по дуге к следующему, темп не падает */
+function answerCorrect() {
+  if (G.busy || !G.running || G.over) { return; }
+  G.busy = true;
+  lockButtons(true);
+
+  const p = G.players[G.activeIdx];
+  if (p) { p.correct++; }
+  G.correctTotal++;
+  SFX.good();
+
+  const from = G.activeIdx;
+  const nx = nextAlive(from);
+  const a = anchorOf(from);
+  const b0 = anchorOf(nx.idx);
+
+  if (!G.solo && nx.wrapped && aliveCount() > 1) { G.round++; }
+
+  /* активный меняется СРАЗУ вместе с заданием — никаких «нажми, чтобы продолжить» */
+  G.activeIdx = nx.idx;
+  renderPlayers();
+  showQuestion(true);
+  renderHud();
+
+  const b = (from === nx.idx) ? b0 : anchorOf(nx.idx);
+  const dist = Math.abs(b.x - a.x);
+
+  SFX.whoosh();
+  G.flight = {
+    t: 0,
+    dur: 0.4,                                  /* быстро — 400мс, чтобы не тормозить темп */
+    x0: a.x, y0: a.y,
+    x1: b.x, y1: b.y,
+    arc: Math.max(110, dist * 0.42),
+    sparkAcc: 0,
+    to: nx.idx
+  };
+  if (!G.raf) { startLoop(); }
+}
+
+function finishFlight() {
+  const f = G.flight;
+  G.flight = null;
+  if (f) {
+    G.activeIdx = f.to;
+    const a = anchorOf(G.activeIdx);
+    placeBomb(a.x, a.y);
+    if (!REDUCE) { burst(a.x, a.y, 8, 60, ['#FFD93D', '#FF9F1C', '#ffffff']); }
+  }
+  G.busy = false;
+  if (G.pendingBoom) {
+    G.pendingBoom = false;
+    explode();
+    return;
+  }
+  if (!G.over) { lockButtons(false); }
+}
+
+/* ❌ — мимо: бомба остаётся, фитиль резко ускоряется */
+function answerWrong() {
+  if (G.busy || !G.running || G.over) { return; }
+  G.busy = true;
+  lockButtons(true);
+
+  const q = G.lastQ;
+  G.speed = G.speed * 1.25;          /* накопительно: ошибаться всё опаснее */
+  SFX.bad();
+
+  /* тиканье должно скакнуть мгновенно */
+  G.tickAcc = 999;
+  G.fuseAcc = 999;
+
+  bombEl.classList.remove('jolt');
+  void bombEl.offsetWidth;
+  bombEl.classList.add('jolt');
+  later(function () { bombEl.classList.remove('jolt'); }, 380);
+
+  shake(false);
+  showBig('БЫСТРЕЕ!', 'red', 800);
+
+  const a = anchorOf(G.activeIdx);
+  burst(a.x, a.y, 14, 90, ['#FF4444', '#FF9F1C', '#FFD93D']);
+
+  toast('<b>' + escapeHtml(q.answer) + '</b> — ' + escapeHtml(q.hint), 2600);
+
+  renderHud();
+
+  /* новое задание тому же игроку — темп не проседает */
+  later(function () {
+    /* если за эти доли секунды рвануло — молчим, разбирается explode() */
+    if (G.over || !G.running) { return; }
+    showQuestion(true);
+    G.busy = false;
+    lockButtons(false);
+  }, 260);
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ==========================================================================
+   9. ВЗРЫВ — абсолютный максимум отклика
+   ========================================================================== */
+function explode() {
+  if (G.over) { return; }
+  G.running = false;
+  G.busy = true;
+  G.flight = null;
+  G.pendingBoom = false;
+  lockButtons(true);
+  bombEl.classList.remove('critical');
+
+  const victim = G.players[G.activeIdx];
+  const a = anchorOf(G.activeIdx);
+
+  /* 1. белая вспышка на весь экран */
+  whiteFlash();
+  /* 2. звук: шум + низкая синусоида с затуханием */
+  SFX.boom();
+  /* 3. восемьдесят частиц */
+  burst(a.x, a.y, 80, Math.max(window.innerWidth, window.innerHeight) * 0.55);
+  burst(window.innerWidth / 2, window.innerHeight / 2, 24, window.innerWidth * 0.4,
+        ['#FF4444', '#FF9F1C', '#FFD93D', '#ffffff']);
+  /* 4. максимальная тряска — 800мс */
+  shake(true);
+  /* 5. «БУ-У-УМ!!!» во весь экран */
+  showBig('БУ-У-УМ!!!', 'red', 1500);
+
+  /* фитиль догорел */
+  G.fuseFrac = 0;
+  paintFuse();
+  bombEl.classList.remove('on');
+  vignette.style.opacity = REDUCE ? '0.35' : '0.85';
+  later(function () { vignette.style.opacity = '0'; }, 700);
+
+  /* выбывший покрывается копотью */
+  if (victim) { victim.alive = false; }
+  later(function () {
+    renderPlayers();
+    renderHud();
+  }, 380);
+
+  /* 6. что дальше: новая бомба или финал */
+  later(function () {
+    if (G.solo || aliveCount() <= 1) {
+      finishGame();
+    } else {
+      nextBomb();
+    }
+  }, 1900);
+}
+
+/* ==========================================================================
+   10. ЖИЗНЕННЫЙ ЦИКЛ ПАРТИИ
+   ========================================================================== */
+function bombDuration(no) {
+  /* Первая бомба — честные 45–90 секунд. Каждая следующая короче,
+     чтобы партия укладывалась в 3 минуты и напряжение росло. */
+  const base = rnd(45, 90);
+  const shrink = Math.pow(0.76, Math.max(0, no - 1));
+  return Math.max(20, base * shrink);
+}
+
+function armBomb() {
+  G.total = bombDuration(G.bombNo);
+  G.burned = 0;
+  G.speed = 1;
+  G.heat = 0;
+  G.critical = false;
+  G.fuseFrac = 1;
+  G.fuseAcc = 0;
+  G.tickAcc = 0;
+  G.tickIv = 1;
+  G.sparkAcc = 0;
+  G.vigPulse = 0;
+  G.flight = null;
+  G.pendingBoom = false;
+  bombEl.classList.remove('critical', 'jolt');
+  bombEl.classList.add('on');
+  document.documentElement.style.setProperty('--heat', '0');
+  document.documentElement.style.setProperty('--pulse-dur', '1.15s');
+  paintFuse();
+}
+
+function nextBomb() {
+  if (G.over) { return; }
+  G.bombNo++;
+  /* бомбу берёт следующий живой после выбывшего */
+  const nx = nextAlive(G.activeIdx);
+  G.activeIdx = nx.idx;
+  armBomb();
+  renderPlayers();
+  showQuestion(true);
+  renderHud();
+
+  const a = anchorOf(G.activeIdx);
+  placeBomb(a.x, a.y);
+  burst(a.x, a.y, 16, 110, ['#FFD93D', '#FF9F1C']);
+  showBig('НОВАЯ БОМБА!', 'gold', 900);
+  SFX.whoosh();
+
+  G.running = true;
+  G.busy = false;
+  lockButtons(false);
+  startLoop();
+}
+
+function startGame() {
+  clearTimers();
+  stopLoop();
+  resetDeck();
+  fxLayer.innerHTML = '';
+  toastEl.classList.remove('show');
+  bigText.className = '';
+  document.body.classList.remove('screen-shake', 'screen-shake-boom');
+
+  G.solo = playerCount === 1;
+  G.players = [];
+  for (let i = 0; i < playerCount; i++) {
+    const nm = (nameDraft[i] || '').trim();
+    G.players.push({
+      name: nm === '' ? ('Игрок ' + (i + 1)) : nm,
+      avatar: AVATARS[i % AVATARS.length],
+      alive: true,
+      correct: 0
+    });
+  }
+
+  G.activeIdx = 0;
+  G.bombNo = 1;
+  G.round = 1;
+  G.realElapsed = 0;
+  G.correctTotal = 0;
+  G.over = false;
+  G.busy = false;
+  G.answerShown = false;
+
+  armBomb();
+  showScreen('game');
+  renderPlayers();
+  showQuestion(true);
+  renderHud();
+
+  const a = anchorOf(G.activeIdx);
+  placeBomb(a.x, a.y);
+
+  G.running = true;
+  lockButtons(false);
+  startLoop();
+  showBig('ФИТИЛЬ ГОРИТ!', 'red', 900);
+  SFX.whoosh();
+}
+
+/* ==========================================================================
+   11. ФИНАЛ
+   ========================================================================== */
+const finalKicker = $('finalKicker');
+const finalName = $('finalName');
+const finalStats = $('finalStats');
+const recordLine = $('recordLine');
+
+/* склонение по-русски: 1 секунду, 74 секунды, 11 секунд */
+function plural(n, one, few, many) {
+  const a = Math.abs(n) % 100;
+  const b = a % 10;
+  if (a > 10 && a < 20) { return many; }
+  if (b === 1) { return one; }
+  if (b >= 2 && b <= 4) { return few; }
+  return many;
+}
+function secWord(n) { return plural(n, 'секунду', 'секунды', 'секунд'); }
+function timesWord(n) { return plural(n, 'раз', 'раза', 'раз'); }
+
+function readRecord() {
+  try {
+    const raw = localStorage.getItem('bomba_solo_record');
+    if (!raw) { return null; }
+    const r = JSON.parse(raw);
+    if (!r || typeof r.correct !== 'number') { return null; }
+    return r;
+  } catch (e) { return null; }
+}
+function writeRecord(rec) {
+  try { localStorage.setItem('bomba_solo_record', JSON.stringify(rec)); } catch (e) { /* приват-режим */ }
+}
+
+function fireworks(times) {
+  if (REDUCE) { return; }
+  for (let i = 0; i < times; i++) {
+    later(function () {
+      burst(rnd(window.innerWidth * 0.15, window.innerWidth * 0.85),
+            rnd(window.innerHeight * 0.15, window.innerHeight * 0.6),
+            34, Math.min(window.innerWidth, window.innerHeight) * 0.34);
+    }, 180 + i * 340);
+  }
+}
+
+function finishGame() {
+  G.over = true;
+  G.running = false;
+  stopLoop();
+  bombEl.classList.remove('on', 'critical', 'jolt');
+  vignette.style.opacity = '0';
+  toastEl.classList.remove('show');
+  lockButtons(true);
+
+  const secs = Math.round(G.realElapsed);
+  recordLine.hidden = true;
+  recordLine.classList.remove('beat');
+
+  if (G.solo) {
+    /* --- соло: цель — продержаться и ответить как можно больше --- */
+    const me = G.players[0];
+    const my = { correct: me ? me.correct : 0, seconds: secs };
+    finalKicker.textContent = 'БОМБА ВЗОРВАЛАСЬ!';
+    finalName.textContent = (me ? me.name : 'Игрок') + ' 😵';
+    finalStats.innerHTML =
+      'Продержался <b>' + secs + '</b> ' + secWord(secs) + ' · ' +
+      'Ответил верно <b>' + my.correct + '</b> ' + timesWord(my.correct);
+
+    const rec = readRecord();
+    const beat = !rec || my.correct > rec.correct ||
+                 (my.correct === rec.correct && my.seconds > rec.seconds);
+    recordLine.hidden = false;
+    if (beat) {
+      writeRecord(my);
+      recordLine.classList.add('beat');
+      recordLine.textContent = '🏆 НОВЫЙ РЕКОРД: ' + my.correct + ' верных за ' + my.seconds + ' с';
+      showScreen('final');
+      showBig('НОВЫЙ РЕКОРД!', 'gold', 1800);
+      shake(true);
+      SFX.record();
+      fireworks(6);
+      whiteFlash();
+      return;
+    }
+    recordLine.textContent = '🏅 Рекорд: ' + rec.correct + ' верных за ' + rec.seconds + ' с — побей его!';
+    showScreen('final');
+    SFX.fanfare();
+    fireworks(2);
+    return;
+  }
+
+  /* --- многопользовательский финал: остался один --- */
+  let winner = null;
+  for (let i = 0; i < G.players.length; i++) {
+    if (G.players[i].alive) { winner = G.players[i]; break; }
+  }
+  finalKicker.textContent = 'ВЫЖИЛ!';
+  finalName.textContent = winner ? (winner.avatar + ' ' + winner.name) : '—';
+  const wc = winner ? winner.correct : 0;
+  finalStats.innerHTML =
+    'Продержался <b>' + secs + '</b> ' + secWord(secs) + ' · ' +
+    'Ответил верно <b>' + wc + '</b> ' + timesWord(wc) + ' · ' +
+    'Бомба взорвалась на <b>' + G.round + '</b> круге';
+
+  showScreen('final');
+  showBig('ВЫЖИЛ!', 'green', 1700);
+  SFX.fanfare();
+  fireworks(5);
+}
+
+/* ==========================================================================
+   12. СОБЫТИЯ
+   ========================================================================== */
+btnOk.addEventListener('click', function () { answerCorrect(); });
+btnNo.addEventListener('click', function () { answerWrong(); });
+
+peekBtn.addEventListener('click', function () {
+  /* подсмотреть ответ — учителю, если он сам засомневался; пустых кликов нет */
+  G.answerShown = !G.answerShown;
+  SFX.click();
+  if (G.answerShown) {
+    peekBtn.textContent = '✔ ' + G.lastQ.answer;
+    peekBtn.classList.add('shown');
+  } else {
+    peekBtn.textContent = '👁 показать ответ';
+    peekBtn.classList.remove('shown');
+  }
+});
+
+$('startBtn').addEventListener('click', function () {
+  audio();          /* контекст создаём по первому жесту пользователя */
+  SFX.click();
+  startGame();
+});
+
+$('againBtn').addEventListener('click', function () {
+  SFX.click();
+  startGame();
+});
+
+$('othersBtn').addEventListener('click', function () {
+  SFX.click();
+  hardReset();
+  showScreen('setup');
+});
+
+/* горячие клавиши для учителя: Enter/пробел — верно, Backspace — мимо */
+document.addEventListener('keydown', function (e) {
+  if (!screens.game.classList.contains('on')) { return; }
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea') { return; }
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    answerCorrect();
+  } else if (e.key === 'Backspace' || e.key === 'ArrowLeft' || e.key === 'Delete') {
+    e.preventDefault();
+    answerWrong();
+  }
+});
+
+/* полный сброс: чистим ВСЕ таймеры и кадры */
+function hardReset() {
+  clearTimers();
+  stopLoop();
+  G.running = false;
+  G.busy = false;
+  G.over = true;
+  G.flight = null;
+  G.pendingBoom = false;
+  bombEl.classList.remove('on', 'critical', 'jolt');
+  bigText.className = '';
+  flash.classList.remove('go');
+  toastEl.classList.remove('show');
+  document.body.classList.remove('screen-shake', 'screen-shake-boom');
+  vignette.style.opacity = '0';
+  document.documentElement.style.setProperty('--heat', '0');
+  fxLayer.innerHTML = '';
+}
+
+/* при уходе со страницы гасим всё, чтобы ничего не тикало в фоне */
+window.addEventListener('pagehide', hardReset);
+window.addEventListener('beforeunload', hardReset);
+
+/* бомба должна оставаться «в руках» при повороте экрана и ресайзе */
+window.addEventListener('resize', function () {
+  if (!screens.game.classList.contains('on') || G.flight) { return; }
+  const a = anchorOf(G.activeIdx);
+  placeBomb(a.x, a.y);
+});
+
+/* стартовая отрисовка */
+showScreen('setup');
+paintFuse();
+
+})();
+</script>
+</body>
+</html>

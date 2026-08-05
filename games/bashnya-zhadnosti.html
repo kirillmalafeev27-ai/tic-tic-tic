@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>БАШНЯ ЖАДНОСТИ — немецкий</title>
+
+<!-- Шрифты: если офлайн — работают запасные стеки, указанные в font-family -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   ПАЛИТРА И БАЗА
+   ============================================================ */
+:root{
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+
+  --title-font:'Bangers','Impact','Haettenschweiler',system-ui,sans-serif;
+  --text-font:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+  --overshoot:cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+
+*{box-sizing:border-box;}
+html,body{overflow-x:hidden;}
+html{-webkit-text-size-adjust:100%;}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--text-font);
+  color:#fff;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,61,139,.30), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(78,205,196,.26), transparent 42%),
+    radial-gradient(circle at 50% 96%, rgba(255,159,28,.24), transparent 48%),
+    linear-gradient(135deg, var(--bg), var(--bg-2));
+  background-attachment:fixed;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* Полутоновая сетка поверх фона */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size:22px 22px;
+  pointer-events:none;
+  z-index:1;
+}
+
+/* ============================================================
+   ОБЩИЕ КОМИКС-ЭЛЕМЕНТЫ
+   ============================================================ */
+.panel{
+  background:rgba(20,16,43,.72);
+  border:5px solid var(--ink);
+  border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+
+/* Физические кнопки — обязательны по спеку */
+.btn{
+  font-family:var(--title-font);
+  letter-spacing:.04em;
+  color:var(--ink);
+  border:5px solid var(--ink);
+  border-radius:18px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:.7rem 1.2rem;
+  cursor:pointer;
+  user-select:none;
+  min-height:52px;
+  transition:transform .12s ease, box-shadow .12s ease, background-color .25s ease, filter .2s ease;
+  background:var(--yellow);
+  line-height:1.05;
+  text-align:center;
+}
+.btn:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink);}
+.btn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink);}
+.btn:focus-visible{outline:4px dashed var(--cyan);outline-offset:4px;}
+.btn[disabled],.btn.off{
+  filter:grayscale(.75) brightness(.72);
+  cursor:not-allowed;
+  transform:none!important;
+  box-shadow:3px 3px 0 var(--ink)!important;
+}
+
+/* ============================================================
+   ШАПКА
+   ============================================================ */
+header{
+  position:relative; z-index:5;
+  padding:.9rem clamp(.6rem,3vw,1.6rem) .4rem;
+  display:flex; flex-direction:column; align-items:center; gap:.55rem;
+}
+h1{
+  margin:0;
+  font-family:var(--title-font);
+  font-size:clamp(2.1rem,7.5vw,4.2rem);
+  letter-spacing:.05em;
+  transform:rotate(-2deg);
+  background:linear-gradient(180deg,var(--gold) 0%,var(--orange) 55%,var(--red) 100%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  filter:drop-shadow(4px 4px 0 var(--ink));
+  text-align:center;
+  padding-right:3.2rem; /* место под кнопку звука */
+}
+.subtitle{
+  font-size:clamp(.75rem,2.4vw,1rem);
+  opacity:.85; margin:-.25rem 0 0; text-align:center; font-weight:600;
+}
+
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:stretch;}
+.chip{
+  font-family:var(--title-font);
+  font-size:clamp(1rem,3.2vw,1.45rem);
+  letter-spacing:.03em;
+  color:var(--ink);
+  background:var(--cyan);
+  border:5px solid var(--ink);
+  border-radius:16px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:.35rem .8rem;
+  transform:rotate(-1.5deg);
+  display:flex;align-items:center;gap:.4rem;
+  white-space:nowrap;
+}
+.chip.safe{background:var(--gold);transform:rotate(1.5deg);}
+.chip.tasks{background:var(--pink);color:#fff;}
+.chip.safe.pop{animation:safePop .55s var(--overshoot);}
+@keyframes safePop{
+  0%{transform:rotate(1.5deg) scale(1);}
+  35%{transform:rotate(-4deg) scale(1.35);}
+  60%{transform:rotate(3deg) scale(.95);}
+  100%{transform:rotate(1.5deg) scale(1);}
+}
+
+#soundBtn{
+  position:fixed; top:10px; right:10px; z-index:75;
+  width:52px;height:52px;min-height:52px;
+  padding:0;font-size:1.4rem;border-radius:16px;
+  background:var(--pink);color:#fff;
+}
+
+/* ============================================================
+   РАСКЛАДКА
+   ============================================================ */
+main{
+  position:relative; z-index:5;
+  width:min(1080px,96vw);
+  margin:0 auto;
+  padding:.4rem clamp(.4rem,2vw,1rem) 2.2rem;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:clamp(.7rem,2vw,1.2rem);
+  align-items:start;
+}
+@media(min-width:880px){
+  main{grid-template-columns:minmax(280px,360px) 1fr;}
+}
+
+/* ============================================================
+   БАШНЯ
+   ============================================================ */
+.tower-panel{
+  padding:.8rem .8rem 1rem;
+  transform:rotate(-1deg);
+  display:flex;flex-direction:column;align-items:center;gap:.5rem;
+}
+.bank-label{
+  font-family:var(--title-font);
+  font-size:clamp(1rem,3vw,1.25rem);
+  letter-spacing:.08em;
+  color:var(--cyan);
+}
+.bank-value{
+  font-family:var(--title-font);
+  font-size:clamp(2.6rem,10vw,4rem);
+  line-height:.9;
+  color:var(--yellow);
+  text-shadow:4px 4px 0 var(--ink);
+  transition:color .4s ease;
+}
+.bank-value.hot{color:var(--orange);}
+.bank-value.danger{color:var(--red);}
+.bank-note{font-size:clamp(.72rem,2.3vw,.9rem);opacity:.8;font-weight:600;min-height:1.2em;text-align:center;}
+
+.tower-stage{
+  position:relative;
+  width:100%;
+  height:clamp(250px,40vh,400px);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.tower-sway{
+  width:min(280px,86%);
+  transform-origin:50% 100%;
+}
+.tower{
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:center;
+  justify-content:flex-start;
+  gap:3px;
+  transform-origin:50% 100%;
+}
+.block{
+  --tilt:0deg;
+  height:clamp(30px,5vh,44px);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--title-font);
+  font-size:clamp(1.05rem,3.6vw,1.6rem);
+  letter-spacing:.05em;
+  color:var(--ink);
+  border:5px solid var(--ink);
+  border-radius:14px;
+  box-shadow:6px 6px 0 var(--ink);
+  transform:rotate(var(--tilt));
+  animation:blockDrop .5s var(--overshoot) both;
+  will-change:transform;
+}
+@keyframes blockDrop{
+  0%{transform:translateY(-190px) rotate(calc(var(--tilt) * 6)) scale(1.25);opacity:0;}
+  60%{opacity:1;}
+  100%{transform:translateY(0) rotate(var(--tilt)) scale(1);opacity:1;}
+}
+/* Призрак будущего блока, пока башня пустая */
+.tower:empty::after{
+  content:"?";
+  width:100%;
+  height:clamp(30px,5vh,44px);
+  display:flex;align-items:center;justify-content:center;
+  border:5px dashed rgba(255,255,255,.22);
+  border-radius:14px;
+  font-family:var(--title-font);
+  font-size:clamp(1.05rem,3.6vw,1.6rem);
+  color:rgba(255,255,255,.3);
+  transform:rotate(-1.4deg);
+}
+.tower.bounce{animation:towerBounce .42s var(--overshoot);}
+@keyframes towerBounce{
+  0%{transform:translateY(0) scaleY(1);}
+  30%{transform:translateY(6px) scaleY(.94);}
+  65%{transform:translateY(-7px) scaleY(1.04);}
+  100%{transform:translateY(0) scaleY(1);}
+}
+
+/* Подставка-земля */
+.ground{
+  width:min(300px,94%);
+  height:24px;
+  margin-top:2px;
+  background:repeating-linear-gradient(45deg,#6b59d6 0 9px,#4a3d9c 9px 18px);
+  border:5px solid var(--ink);
+  border-radius:12px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+
+/* Качание башни: чем выше — тем страшнее */
+.tower-sway.sway1{animation:sway 3.4s ease-in-out infinite;--amp:.5deg;}
+.tower-sway.sway2{animation:sway 2.2s ease-in-out infinite;--amp:1.3deg;}
+.tower-sway.sway3{animation:sway 1.25s ease-in-out infinite;--amp:2.4deg;}
+@keyframes sway{
+  0%,100%{transform:rotate(calc(var(--amp) * -1));}
+  50%{transform:rotate(var(--amp));}
+}
+
+/* Обрушение */
+@keyframes blockFall{
+  0%{transform:translate(0,0) rotate(var(--tilt));opacity:1;}
+  15%{transform:translate(0,-14px) rotate(var(--tilt));opacity:1;}
+  100%{transform:translate(var(--fx),95vh) rotate(var(--frot));opacity:.15;}
+}
+.block.falling{animation:blockFall .95s cubic-bezier(.45,.05,.75,.6) both;}
+
+/* Тревожное свечение по краям экрана */
+#dangerGlow{
+  position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;
+  box-shadow:inset 0 0 60px 12px rgba(255,68,68,.75), inset 0 0 170px 46px rgba(255,61,139,.28);
+  transition:opacity .5s ease;
+}
+#dangerGlow.on{opacity:1;animation:glowPulse 1.1s ease-in-out infinite;}
+@keyframes glowPulse{0%,100%{opacity:.38;}50%{opacity:.95;}}
+
+/* ============================================================
+   ПАНЕЛЬ ЗАДАНИЯ / ВЫБОРА
+   ============================================================ */
+.play-panel{
+  padding:clamp(.8rem,2.5vw,1.3rem);
+  transform:rotate(1deg);
+  display:flex;flex-direction:column;gap:.85rem;
+  min-height:clamp(300px,44vh,420px);
+  justify-content:center;
+}
+.q-num{
+  font-family:var(--title-font);
+  font-size:clamp(.95rem,3vw,1.2rem);
+  color:var(--cyan);letter-spacing:.08em;text-align:center;
+}
+.q-prompt{
+  font-family:var(--title-font);
+  font-size:clamp(1.9rem,6.4vw,3.2rem);
+  line-height:1.05;
+  text-align:center;
+  color:#fff;
+  text-shadow:4px 4px 0 var(--ink);
+  word-break:break-word;
+}
+.q-hint-call{
+  text-align:center;font-weight:600;
+  font-size:clamp(.8rem,2.6vw,1rem);
+  opacity:.85;
+}
+.row{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;}
+.row > .btn{flex:1 1 46%;min-width:min(240px,100%);}
+
+.btn-yes{background:var(--green);font-size:clamp(1.1rem,3.6vw,1.6rem);}
+.btn-no{background:var(--red);color:#fff;font-size:clamp(1.1rem,3.6vw,1.6rem);}
+
+/* Кнопки выбора: спорят друг с другом */
+#btnTake{
+  background:var(--green);
+  font-size:clamp(1.05rem,3.2vw,1.5rem);
+  transform:rotate(-1deg);
+}
+#btnTake:hover{transform:rotate(-1deg) translate(-3px,-3px);}
+#btnTake:active{transform:rotate(-1deg) translate(4px,4px);}
+#btnRisk{
+  --rs:1;
+  background:var(--orange);
+  color:var(--ink);
+  font-size:calc(clamp(1.05rem,3.2vw,1.5rem) * var(--rs));
+  padding:calc(.7rem * var(--rs)) calc(1rem * var(--rs));
+  transform:rotate(1.5deg);
+}
+#btnRisk:hover{transform:rotate(1.5deg) translate(-3px,-3px);}
+#btnRisk:active{transform:rotate(1.5deg) translate(4px,4px);}
+.btn-sub{
+  display:block;
+  font-family:var(--text-font);
+  font-weight:700;
+  font-size:.62em;
+  opacity:.85;
+  margin-top:.15rem;
+  letter-spacing:0;
+}
+
+/* Ожидание исхода */
+.suspense{
+  text-align:center;
+  font-family:var(--title-font);
+  font-size:clamp(2.4rem,9vw,4rem);
+  letter-spacing:.3em;
+  color:var(--yellow);
+  animation:susp 1s ease-in-out infinite;
+}
+@keyframes susp{0%,100%{opacity:.35;transform:scale(.96);}50%{opacity:1;transform:scale(1.06);}}
+
+/* Панель правила после ошибки */
+.hint-box{
+  background:rgba(255,217,61,.14);
+  border:5px solid var(--ink);
+  border-radius:18px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:.8rem .9rem;
+  transform:rotate(-.8deg);
+}
+.hint-title{
+  font-family:var(--title-font);
+  font-size:clamp(1.1rem,3.6vw,1.5rem);
+  color:var(--yellow);letter-spacing:.05em;margin-bottom:.3rem;
+}
+.hint-answer{
+  font-family:var(--title-font);
+  font-size:clamp(1.4rem,5vw,2.2rem);
+  color:var(--green);
+  text-shadow:3px 3px 0 var(--ink);
+  margin-bottom:.35rem;
+  word-break:break-word;
+}
+.hint-text{font-size:clamp(.88rem,2.7vw,1.05rem);font-weight:600;line-height:1.4;}
+.burn-line{
+  text-align:center;font-family:var(--title-font);
+  font-size:clamp(1.2rem,4.4vw,1.9rem);
+  color:var(--red);letter-spacing:.05em;
+}
+
+.hidden{display:none!important;}
+
+/* ============================================================
+   ЭФФЕКТЫ: частицы, монеты, надписи, тряска
+   ============================================================ */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden;}
+.particle{
+  position:fixed;width:16px;height:16px;border-radius:4px;
+  border:3px solid var(--ink);will-change:transform,opacity;
+}
+.coin{
+  position:fixed;width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff6c9, var(--gold) 55%, var(--orange));
+  border:4px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--title-font);font-size:.85rem;color:var(--ink);
+  will-change:transform,opacity;
+}
+
+#bigText{
+  position:fixed;inset:0;z-index:80;
+  display:none;align-items:center;justify-content:center;
+  pointer-events:none;padding:1rem;overflow:hidden;
+}
+#bigText.show{display:flex;}
+#bigText span{
+  font-family:var(--title-font);
+  font-size:clamp(4rem,16vw,9rem);
+  line-height:.85;
+  text-align:center;
+  max-width:94vw;
+  word-break:break-word;
+  -webkit-text-stroke:3px var(--ink);
+  paint-order:stroke fill;
+  animation:bigPop .5s var(--overshoot);
+}
+@keyframes bigPop{
+  0%{transform:scale(.2) rotate(-14deg);opacity:0;}
+  70%{transform:scale(1.18) rotate(3deg);opacity:1;}
+  100%{transform:scale(1) rotate(-2deg);opacity:1;}
+}
+
+body.screen-shake{animation:shake .5s ease-in-out;}
+@keyframes shake{
+  0%,100%{transform:translate(0,0) rotate(0);}
+  10%{transform:translate(-11px,7px) rotate(-1.2deg);}
+  25%{transform:translate(10px,-8px) rotate(1.1deg);}
+  40%{transform:translate(-9px,-5px) rotate(-.9deg);}
+  55%{transform:translate(8px,7px) rotate(.8deg);}
+  70%{transform:translate(-6px,3px) rotate(-.5deg);}
+  85%{transform:translate(4px,-3px) rotate(.3deg);}
+}
+
+/* ============================================================
+   ФИНАЛЬНОЕ ОКНО
+   ============================================================ */
+#finalWrap{
+  position:fixed;inset:0;z-index:90;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(10,7,28,.82);
+  padding:1rem;overflow-y:auto;
+}
+#finalWrap.show{display:flex;}
+.final-card{
+  width:min(560px,94vw);
+  background:linear-gradient(160deg,#2d1b69,#1a1240);
+  border:5px solid var(--ink);
+  border-radius:22px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:clamp(1rem,4vw,1.8rem);
+  text-align:center;
+  transform:rotate(-1.5deg);
+  animation:cardIn .5s var(--overshoot);
+}
+@keyframes cardIn{0%{transform:scale(.5) rotate(8deg);opacity:0;}100%{transform:scale(1) rotate(-1.5deg);opacity:1;}}
+.final-title{
+  font-family:var(--title-font);
+  font-size:clamp(2.4rem,10vw,4rem);
+  line-height:.95;
+  margin:0 0 .4rem;
+  -webkit-text-stroke:2px var(--ink);
+  paint-order:stroke fill;
+}
+.final-sum{
+  font-family:var(--title-font);
+  font-size:clamp(3rem,14vw,5.5rem);
+  line-height:.9;
+  color:var(--gold);
+  text-shadow:5px 5px 0 var(--ink);
+  margin:.2rem 0;
+}
+.final-stats{
+  font-weight:600;
+  font-size:clamp(.9rem,2.8vw,1.1rem);
+  background:rgba(0,0,0,.28);
+  border:4px solid var(--ink);
+  border-radius:14px;
+  padding:.6rem .7rem;
+  margin:.7rem 0;
+  line-height:1.5;
+}
+.final-joke{
+  font-family:var(--title-font);
+  font-size:clamp(1.1rem,4.2vw,1.7rem);
+  color:var(--orange);
+  letter-spacing:.03em;
+  margin:.5rem 0 .8rem;
+  line-height:1.15;
+}
+#btnRestart{background:var(--cyan);font-size:clamp(1.2rem,4.4vw,1.7rem);width:100%;}
+
+/* ============================================================
+   ТЕЛЕФОН: ужимаем всё, чтобы башня И задание влезли на один экран
+   ============================================================ */
+@media(max-width:600px){
+  header{padding:.55rem .5rem .25rem;gap:.4rem;}
+  h1{font-size:clamp(1.7rem,8.4vw,2.6rem);padding-right:2.9rem;}
+  .subtitle{font-size:.72rem;line-height:1.25;}
+  .chip{
+    font-size:1rem;padding:.25rem .5rem;border-width:4px;
+    box-shadow:5px 5px 0 var(--ink);border-radius:13px;
+  }
+  main{padding:.2rem .5rem 1.2rem;gap:.6rem;}
+  .tower-panel{padding:.55rem .45rem .7rem;gap:.25rem;}
+  .bank-label{font-size:.95rem;}
+  .bank-value{font-size:2.2rem;}
+  .bank-note{font-size:.75rem;}
+  .tower-stage{height:clamp(196px,27vh,270px);}
+  .block{
+    height:26px;font-size:1.05rem;border-width:4px;
+    box-shadow:5px 5px 0 var(--ink);border-radius:11px;
+  }
+  .ground{height:18px;}
+  .play-panel{min-height:0;padding:.7rem .6rem;gap:.6rem;}
+  .q-prompt{font-size:clamp(1.45rem,6.6vw,2.2rem);}
+  .q-hint-call{font-size:.8rem;}
+  .btn{min-height:50px;padding:.55rem .9rem;}
+}
+
+/* ============================================================
+   ЩАДЯЩИЙ РЕЖИМ ДВИЖЕНИЯ
+   ============================================================ */
+@media(prefers-reduced-motion:reduce){
+  body.screen-shake{animation:none!important;}
+  .tower-sway.sway1,.tower-sway.sway2,.tower-sway.sway3{animation:none!important;}
+  #dangerGlow.on{animation:none!important;opacity:.8;}
+  .block{animation-duration:.01s!important;}
+  .tower.bounce{animation:none!important;}
+  .suspense{animation:none!important;opacity:1;}
+  #bigText span{animation:none!important;}
+  .final-card{animation:none!important;}
+  .chip.safe.pop{animation:none!important;}
+  .btn:hover{transform:none;box-shadow:6px 6px 0 var(--ink);}
+}
+</style>
+</head>
+<body>
+
+<div id="dangerGlow"></div>
+
+<button id="soundBtn" class="btn" type="button" aria-label="Звук вкл/выкл">🔊</button>
+
+<header>
+  <h1>БАШНЯ ЖАДНОСТИ</h1>
+  <p class="subtitle">Отвечай вслух → учитель жмёт ✅ или ❌ → ты решаешь: забрать или ещё разок</p>
+  <div class="chips">
+    <div class="chip safe" id="safeChip">🏦 СЕЙФ: <span id="safeVal">0</span>/50</div>
+    <div class="chip tasks" id="taskChip">📋 ЗАДАНИЕ <span id="taskVal">0</span>/12</div>
+  </div>
+</header>
+
+<main>
+  <!-- ===== ЛЕВО: БАШНЯ ===== -->
+  <section class="panel tower-panel">
+    <div class="bank-label">БАНК НА БАШНЕ</div>
+    <div class="bank-value" id="bankVal">0</div>
+    <div class="bank-note" id="bankNote">Башня пустая. Ответь верно — появится первый блок.</div>
+    <div class="tower-stage">
+      <div class="tower-sway" id="towerSway">
+        <div class="tower" id="tower"></div>
+      </div>
+    </div>
+    <div class="ground"></div>
+  </section>
+
+  <!-- ===== ПРАВО: ИГРА ===== -->
+  <section class="panel play-panel">
+
+    <!-- Шаг 1: задание -->
+    <div id="stageQuestion">
+      <div class="q-num" id="qNum">ЗАДАНИЕ 1</div>
+      <div class="q-prompt" id="qPrompt">…</div>
+      <p class="q-hint-call">Скажи ответ вслух. Учитель проверяет:</p>
+      <div class="row">
+        <button class="btn btn-yes" id="btnYes" type="button">✅ ВЕРНО</button>
+        <button class="btn btn-no" id="btnNo" type="button">❌ ОШИБКА</button>
+      </div>
+    </div>
+
+    <!-- Шаг 2: ожидание исхода -->
+    <div id="stageWait" class="hidden">
+      <div class="suspense">• • •</div>
+    </div>
+
+    <!-- Шаг 3: выбор -->
+    <div id="stageChoice" class="hidden">
+      <div class="q-num" id="choiceTitle">ВЕРНО! БАНК УДВОИЛСЯ</div>
+      <p class="q-hint-call" id="choiceNote">Забрать в сейф или рискнуть ещё разок?</p>
+      <div class="row">
+        <button class="btn" id="btnTake" type="button">ЗАБРАТЬ 🏦<span class="btn-sub" id="takeSub">+0 в сейф</span></button>
+        <button class="btn" id="btnRisk" type="button">ЕЩЁ! 🔥<span class="btn-sub" id="riskSub">0 → 0</span></button>
+      </div>
+    </div>
+
+    <!-- Шаг 4: обломки + правило -->
+    <div id="stageBurned" class="hidden">
+      <div class="burn-line">🔥 БАНК СГОРЕЛ ДОТЛА 🔥</div>
+      <div class="hint-box">
+        <div class="hint-title">ПРАВИЛО, ЧТОБЫ БОЛЬШЕ НЕ ГОРЕТЬ</div>
+        <div class="hint-answer" id="burnAnswer">—</div>
+        <div class="hint-text" id="burnHint">—</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnNext" type="button"
+                style="background:var(--yellow);font-size:clamp(1.1rem,3.6vw,1.6rem)">ДАЛЬШЕ ▶</button>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<div id="fx"></div>
+<div id="bigText"><span id="bigTextSpan"></span></div>
+
+<div id="finalWrap">
+  <div class="final-card">
+    <h2 class="final-title" id="finalTitle">ТЫ БОГАЧ!</h2>
+    <div class="final-sum" id="finalSum">0</div>
+    <div class="q-hint-call">очков в сейфе</div>
+    <div class="final-stats" id="finalStats"></div>
+    <div class="final-joke" id="finalJoke"></div>
+    <button class="btn" id="btnRestart" type="button">🔄 ЕЩЁ РАЗОК</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1. БАНК ЗАДАНИЙ
+   ============================================================ */
+// ⬇️ ЗАМЕНИ ЭТОТ СПИСОК, ЧТОБЫ ИГРАТЬ В ЛЮБУЮ ДРУГУЮ ТЕМУ.
+// Формат: prompt — что показываем, answer — правильный ответ, hint — объяснение правила.
+const QUESTIONS = [
+  {prompt: "ich + machen (делать)",      answer: "ich mache",   hint: "После ich → окончание -e. Основа mach- + e = mache"},
+  {prompt: "du + spielen (играть)",      answer: "du spielst",  hint: "После du → окончание -st. Основа spiel- + st = spielst"},
+  {prompt: "er + lernen (учить)",        answer: "er lernt",    hint: "После er/sie/es → окончание -t. Основа lern- + t = lernt"},
+  {prompt: "sie + malen (рисовать)",     answer: "sie malt",    hint: "После sie (она) → окончание -t. Основа mal- + t = malt"},
+  {prompt: "es + kommen (приходить)",    answer: "es kommt",    hint: "После es → окончание -t. Основа komm- + t = kommt"},
+  {prompt: "wir + wohnen (жить)",        answer: "wir wohnen",  hint: "После wir → окончание -en, как инфинитив. wohn- + en = wohnen"},
+  {prompt: "ihr + singen (петь)",        answer: "ihr singt",   hint: "После ihr → окончание -t. Основа sing- + t = singt"},
+  {prompt: "sie + trinken (пить)",       answer: "sie trinken", hint: "После sie (они) → окончание -en. Основа trink- + en = trinken"},
+  {prompt: "du + heißen (зваться)",      answer: "du heißt",    hint: "⚠️ ХИТРО! Основа уже кончается на ß (heiß-), поэтому только -t, а не -st. du heißt, НЕ du heißst"},
+  {prompt: "ihr + tanzen (танцевать)",   answer: "ihr tanzt",   hint: "Основа tanz- + t = tanzt. Произносим «танцт»"},
+  {prompt: "ich + sein (быть)",          answer: "ich bin",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ глагол! Учим наизусть: ich BIN"},
+  {prompt: "du + sein (быть)",           answer: "du bist",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: du BIST"},
+  {prompt: "er + sein (быть)",           answer: "er ist",      hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: er/sie/es IST"},
+  {prompt: "wir + sein (быть)",          answer: "wir sind",    hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! wir SIND"},
+  {prompt: "ich + haben (иметь)",        answer: "ich habe",    hint: "В форме ich окончание обычное: hab- + e = habe"},
+  {prompt: "du + haben (иметь)",         answer: "du hast",     hint: "🌟 haben — НЕПРАВИЛЬНЫЙ в du и er! Буква -b- ПРОПАДАЕТ: du HAST (не habst)"},
+  {prompt: "er + haben (иметь)",         answer: "er hat",      hint: "🌟 haben — НЕПРАВИЛЬНЫЙ! Буква -b- ПРОПАДАЕТ: er HAT (не habt)"},
+  {prompt: "ihr + haben (иметь)",        answer: "ihr habt",    hint: "У ihr всё честно: hab- + t = habt"},
+  {prompt: "du + arbeiten (работать)",   answer: "du arbeitest",hint: "⚠️ Основа кончается на -t (arbeit-), между основой и окончанием вставляем -e-: arbeit-e-st"},
+  {prompt: "er + finden (находить)",     answer: "er findet",   hint: "⚠️ Основа кончается на -d (find-), вставляем -e-: find-e-t = findet"},
+  {prompt: "wir + gehen (идти)",         answer: "wir gehen",   hint: "После wir → -en. geh- + en = gehen"},
+  {prompt: "ihr + lesen (читать)",       answer: "ihr lest",    hint: "Основа кончается на -s (les-), поэтому только -t: lest"},
+  {prompt: "du + fahren (ехать)",        answer: "du fährst",   hint: "🌟 Корневая гласная меняется: a → ä. du FÄHRST"},
+  {prompt: "er + sprechen (говорить)",   answer: "er spricht",  hint: "🌟 Корневая гласная меняется: e → i. er SPRICHT"}
+];
+
+/* ============================================================
+   2. НАСТРОЙКИ ПАРТИИ
+   ============================================================ */
+const VALUES = [1, 2, 4, 8, 16, 32, 64];               // этажи башни
+const BLOCK_COLORS = ['#4ECDC4','#7ED98A','#95E061','#FFD93D','#FF9F1C','#FF6A1C','#FF4444'];
+const RISK_COLORS  = ['#FF9F1C','#FF9F1C','#FF8A1C','#FF6A1C','#FF5A2B','#FF4444','#FF4444'];
+const TAKE_COLORS  = ['#95E061','#8ADB58','#7FD64F','#74D146','#69CC3D','#5EC734','#53C22B'];
+const GOAL = 50;        // сколько нужно накопить в сейфе
+const TOTAL_TASKS = 12; // сколько заданий даётся на партию
+const MAX_VALUE = VALUES[VALUES.length - 1];
+
+// Запасное задание — на случай пустого банка (игра не должна падать)
+const FALLBACK_Q = {prompt: "Заданий нет", answer: "—", hint: "Добавь задания в список QUESTIONS."};
+
+/* ============================================================
+   3. СОСТОЯНИЕ
+   ============================================================ */
+const S = {
+  safe: 0,          // очки в сейфе
+  levels: [],       // значения блоков башни снизу вверх
+  bank: 0,          // текущий банк = верхний блок
+  used: 0,          // сколько заданий уже показано
+  maxTower: 0,      // самая высокая башня за партию
+  burns: 0,         // сколько раз сгорело
+  burnedPts: 0,     // сколько очков сгорело
+  deck: [],         // перемешанная колода заданий
+  pos: 0,           // позиция в колоде
+  current: null,    // текущее задание
+  stage: 'idle',    // question | wait | choice | burned | over
+  busy: false       // флаг «ход обрабатывается» — защита от двойного клика
+};
+
+const timers = [];  // все таймеры, чтобы вычистить при рестарте
+function later(fn, ms){
+  const id = setTimeout(function(){
+    const i = timers.indexOf(id);
+    if (i >= 0) timers.splice(i, 1);
+    fn();
+  }, ms);
+  timers.push(id);
+  return id;
+}
+function clearTimers(){
+  while (timers.length) clearTimeout(timers.pop());
+}
+
+/* ============================================================
+   4. ССЫЛКИ НА DOM
+   ============================================================ */
+const $ = function(id){ return document.getElementById(id); };
+const elBody      = document.body;
+const elTower     = $('tower');
+const elSway      = $('towerSway');
+const elBankVal   = $('bankVal');
+const elBankNote  = $('bankNote');
+const elSafeVal   = $('safeVal');
+const elSafeChip  = $('safeChip');
+const elTaskVal   = $('taskVal');
+const elQNum      = $('qNum');
+const elQPrompt   = $('qPrompt');
+const elFx        = $('fx');
+const elBig       = $('bigText');
+const elBigSpan   = $('bigTextSpan');
+const elGlow      = $('dangerGlow');
+const stages = {
+  question: $('stageQuestion'),
+  wait:     $('stageWait'),
+  choice:   $('stageChoice'),
+  burned:   $('stageBurned')
+};
+
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Русское склонение: 1 очко, 2 очка, 5 очков
+function ochki(n){
+  const a = Math.abs(n) % 100;
+  const b = a % 10;
+  if (a > 10 && a < 20) return 'очков';
+  if (b === 1) return 'очко';
+  if (b >= 2 && b <= 4) return 'очка';
+  return 'очков';
+}
+
+/* ============================================================
+   5. ЗВУК (Web Audio, лениво по первому жесту)
+   ============================================================ */
+let audioCtx = null;
+let soundOn = true;
+try {
+  soundOn = localStorage.getItem('bz_sound') !== 'off';
+} catch (e) { soundOn = true; }
+
+function ensureAudio(){
+  if (!soundOn) return null;
+  try {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+
+// Один тон: частота, длительность, форма волны, громкость, задержка, конечная частота
+function tone(freq, dur, type, vol, delay, freqTo){
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  try {
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freqTo) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqTo), t0 + dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  } catch (e) { /* звук не критичен */ }
+}
+
+function sClick(){ tone(430, 0.08, 'square', 0.10, 0); }
+function sBlock(level){ // глухой стук + звоночек, тем выше, чем выше этаж
+  tone(120 + level * 12, 0.16, 'triangle', 0.20, 0);
+  tone(520 + level * 90, 0.10, 'sine', 0.10, 0.04);
+}
+function sCorrect(){ // восходящее арпеджио
+  [523, 659, 784, 1046].forEach(function(f, i){ tone(f, 0.16, 'triangle', 0.16, i * 0.07); });
+}
+function sRisk(level){ // дерзкий подъём — чем выше банк, тем выше тон
+  tone(300 + level * 40, 0.22, 'sawtooth', 0.10, 0, 700 + level * 90);
+}
+function sCoins(n){ // монетки в сейф
+  const k = Math.min(n, 8);
+  for (let i = 0; i < k; i++) tone(900 + i * 130, 0.11, 'sine', 0.13, i * 0.055);
+  tone(1568, 0.3, 'triangle', 0.16, k * 0.055);
+}
+function sBurn(){ // низкий нисходящий гул
+  tone(220, 1.2, 'sawtooth', 0.22, 0, 42);
+  tone(110, 1.4, 'square', 0.14, 0.05, 30);
+  tone(660, 0.5, 'triangle', 0.10, 0, 90);
+}
+function sFanfare(){
+  [523, 659, 784, 1046, 1318, 1568].forEach(function(f, i){ tone(f, 0.32, 'triangle', 0.18, i * 0.11); });
+  tone(261, 0.9, 'sine', 0.14, 0.6);
+}
+
+const btnSound = $('soundBtn');
+function paintSound(){ btnSound.textContent = soundOn ? '🔊' : '🔇'; }
+btnSound.addEventListener('click', function(){
+  soundOn = !soundOn;
+  try { localStorage.setItem('bz_sound', soundOn ? 'on' : 'off'); } catch (e) {}
+  paintSound();
+  if (soundOn) { ensureAudio(); sClick(); }
+});
+paintSound();
+
+/* ============================================================
+   6. ЭФФЕКТЫ
+   ============================================================ */
+function shake(){
+  if (reduceMotion) return;
+  elBody.classList.remove('screen-shake');
+  void elBody.offsetWidth;
+  elBody.classList.add('screen-shake');
+  later(function(){ elBody.classList.remove('screen-shake'); }, 550);
+}
+
+function bigText(txt, color, ms){
+  elBigSpan.textContent = txt;
+  elBigSpan.style.color = color || 'var(--yellow)';
+  elBig.classList.add('show');
+  later(function(){ elBig.classList.remove('show'); }, ms || 1200);
+}
+
+// Веер частиц из точки
+function burst(x, y, count, colors){
+  if (reduceMotion) return;
+  const n = count;
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = (x - 8) + 'px';
+    p.style.top = (y - 8) + 'px';
+    p.style.background = colors[i % colors.length];
+    p.style.borderRadius = (i % 3 === 0) ? '50%' : '4px';
+    elFx.appendChild(p);
+    const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+    const dist = 90 + Math.random() * 240;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist - 60;
+    animateEl(p, [
+      {transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1},
+      {transform: 'translate(' + dx + 'px,' + (dy + 220) + 'px) rotate(' + (Math.random() * 900 - 450) + 'deg) scale(.3)', opacity: 0}
+    ], 750 + Math.random() * 500, 'cubic-bezier(.15,.6,.4,1)', 0);
+  }
+}
+
+// Обёртка над Web Animations API с безопасным удалением узла
+function animateEl(el, frames, dur, easing, delay){
+  let anim = null;
+  try {
+    anim = el.animate(frames, {duration: dur, easing: easing || 'linear', delay: delay || 0, fill: 'forwards'});
+  } catch (e) { anim = null; }
+  if (anim) {
+    anim.onfinish = function(){ if (el.parentNode) el.parentNode.removeChild(el); };
+    anim.oncancel = function(){ if (el.parentNode) el.parentNode.removeChild(el); };
+    later(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, dur + (delay || 0) + 400);
+  } else {
+    later(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 60);
+  }
+}
+
+// Монетки летят ПО ДУГЕ от башни к сейфу
+function coinsToSafe(amount){
+  const from = elTower.getBoundingClientRect();
+  const to = elSafeChip.getBoundingClientRect();
+  const sx = from.left + from.width / 2;
+  const sy = from.top + Math.min(from.height / 2, 80);
+  const tx = to.left + to.width / 2;
+  const ty = to.top + to.height / 2;
+  const n = Math.max(6, Math.min(18, Math.round(amount)));
+
+  if (reduceMotion) { sCoins(n); return; }
+
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'coin';
+    c.textContent = '₽';
+    const jx = (Math.random() - 0.5) * 70;
+    const jy = (Math.random() - 0.5) * 70;
+    c.style.left = (sx - 15 + jx) + 'px';
+    c.style.top = (sy - 15 + jy) + 'px';
+    elFx.appendChild(c);
+    const dx = tx - (sx + jx);
+    const dy = ty - (sy + jy);
+    // Средняя точка приподнята — получается дуга, а не прямая
+    const mx = dx * 0.45 + (Math.random() - 0.5) * 60;
+    const my = dy * 0.35 - 120 - Math.random() * 70;
+    animateEl(c, [
+      {transform: 'translate(0,0) scale(.5) rotate(0deg)', opacity: 0.2},
+      {transform: 'translate(' + mx + 'px,' + my + 'px) scale(1.15) rotate(180deg)', opacity: 1, offset: 0.5},
+      {transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.35) rotate(400deg)', opacity: 0}
+    ], 620 + Math.random() * 240, 'cubic-bezier(.35,.1,.6,1)', i * 42);
+  }
+  sCoins(n);
+}
+
+/* ============================================================
+   7. БАШНЯ
+   ============================================================ */
+function levelIndex(value){
+  const i = VALUES.indexOf(value);
+  return i < 0 ? VALUES.length - 1 : i;
+}
+
+function addBlock(value){
+  const idx = levelIndex(value);
+  const b = document.createElement('div');
+  b.className = 'block';
+  const tilt = ((idx % 2 === 0) ? -1 : 1) * (1.1 + Math.random() * 1.2);
+  b.style.setProperty('--tilt', tilt.toFixed(2) + 'deg');
+  b.style.background = BLOCK_COLORS[idx];
+  b.style.width = Math.max(62, 100 - idx * 5) + '%';
+  b.textContent = value;
+  elTower.appendChild(b);
+
+  // подпрыгивание всей башни при посадке блока
+  if (!reduceMotion) {
+    elTower.classList.remove('bounce');
+    void elTower.offsetWidth;
+    later(function(){ elTower.classList.add('bounce'); }, 330);
+    later(function(){ elTower.classList.remove('bounce'); }, 800);
+  }
+}
+
+// Обрушение: каждый блок улетает со своей задержкой и вращением
+function collapseTower(){
+  const blocks = Array.prototype.slice.call(elTower.children);
+  const top = blocks.length - 1;
+  blocks.forEach(function(b, i){
+    const fromTop = top - i;                    // верхние падают первыми
+    b.style.setProperty('--fx', ((Math.random() - 0.5) * 320).toFixed(0) + 'px');
+    b.style.setProperty('--frot', (Math.random() * 1000 - 500).toFixed(0) + 'deg');
+    b.style.animationDelay = (fromTop * 55) + 'ms';
+    b.classList.add('falling');
+  });
+}
+
+function clearTower(){
+  elTower.innerHTML = '';
+  elTower.classList.remove('bounce');
+}
+
+// Тревожность растёт вместе с башней
+function updateDanger(){
+  const v = S.bank;
+  elSway.classList.remove('sway1', 'sway2', 'sway3');
+  if (v >= 32) elSway.classList.add('sway3');
+  else if (v >= 16) elSway.classList.add('sway2');
+  else if (v >= 8) elSway.classList.add('sway1');
+
+  if (v >= 32) elGlow.classList.add('on'); else elGlow.classList.remove('on');
+
+  elBankVal.textContent = v;
+  elBankVal.classList.toggle('hot', v >= 8 && v < 32);
+  elBankVal.classList.toggle('danger', v >= 32);
+}
+
+/* ============================================================
+   8. ШАПКА И ЭКРАНЫ
+   ============================================================ */
+function paintHeader(){
+  elSafeVal.textContent = S.safe;
+  elTaskVal.textContent = Math.min(S.used, TOTAL_TASKS);
+}
+
+function setStage(name){
+  S.stage = name;
+  for (const key in stages) {
+    stages[key].classList.toggle('hidden', key !== name);
+  }
+}
+
+/* ============================================================
+   9. КОЛОДА ЗАДАНИЙ
+   ============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function drawQuestion(){
+  if (!QUESTIONS.length) return FALLBACK_Q;
+  if (S.pos >= S.deck.length) {           // задания кончились — второй круг
+    S.deck = shuffle(QUESTIONS);
+    S.pos = 0;
+  }
+  const q = S.deck[S.pos];
+  S.pos++;
+  return q || FALLBACK_Q;
+}
+
+/* ============================================================
+   10. ХОД ИГРЫ
+   ============================================================ */
+function nextQuestion(){
+  if (S.over) return;
+  if (S.safe >= GOAL) { finish(true); return; }
+  if (S.used >= TOTAL_TASKS) { finish(false); return; }
+
+  S.used++;
+  S.current = drawQuestion();
+  paintHeader();
+  elQNum.textContent = 'ЗАДАНИЕ ' + S.used + ' ИЗ ' + TOTAL_TASKS;
+  elQPrompt.textContent = S.current.prompt;
+  updateBankNote();
+  S.busy = false;
+  setStage('question');
+}
+
+function updateBankNote(){
+  if (S.bank <= 0) {
+    elBankNote.textContent = 'Башня пустая. Ответь верно — появится первый блок.';
+  } else if (S.bank >= MAX_VALUE) {
+    elBankNote.textContent = 'Выше некуда. Это потолок!';
+  } else if (S.bank >= 32) {
+    elBankNote.textContent = 'Она качается… Одна ошибка — и всё сгорит.';
+  } else if (S.bank >= 8) {
+    elBankNote.textContent = 'Башня шатается. Под угрозой: ' + S.bank + '.';
+  } else {
+    elBankNote.textContent = 'На кону ' + S.bank + '. Дальше — ×2.';
+  }
+}
+
+// Учитель нажал ✅ или ❌ — исход раскрывается не сразу
+function verdict(ok){
+  if (S.busy || S.stage !== 'question') return;
+  S.busy = true;
+  ensureAudio();
+  sClick();
+  setStage('wait');
+  later(function(){ ok ? growTower() : burnTower(); }, 750);
+}
+
+function growTower(){
+  const value = S.levels.length ? Math.min(S.levels[S.levels.length - 1] * 2, MAX_VALUE) : 1;
+  S.levels.push(value);
+  S.bank = value;
+  if (value > S.maxTower) S.maxTower = value;
+
+  addBlock(value);
+  sBlock(S.levels.length);
+  updateDanger();
+  updateBankNote();
+
+  later(function(){
+    if (value >= MAX_VALUE) { legend(); return; }
+    sCorrect();
+    showChoice();
+  }, 520);
+}
+
+function showChoice(){
+  const noTasksLeft = S.used >= TOTAL_TASKS;
+  const idx = levelIndex(S.bank);
+
+  $('choiceTitle').textContent = 'ВЕРНО! БАНК = ' + S.bank;
+  $('takeSub').textContent = '+' + S.bank + ' в сейф';
+  $('riskSub').textContent = S.bank + ' → ' + (S.bank * 2);
+
+  const btnTake = $('btnTake');
+  const btnRisk = $('btnRisk');
+  btnTake.style.background = TAKE_COLORS[idx];
+  btnRisk.style.background = RISK_COLORS[idx];
+  btnRisk.style.setProperty('--rs', (1 + idx * 0.13).toFixed(2)); // кнопка «ЕЩЁ» растёт
+
+  if (noTasksLeft) {
+    btnRisk.classList.add('off');
+    $('riskSub').textContent = 'заданий больше нет';
+    $('choiceNote').textContent = 'Заданий больше нет — забирай, пока цело!';
+  } else {
+    btnRisk.classList.remove('off');
+    $('choiceNote').textContent = S.bank >= 16
+      ? 'Страшно? Ещё разок — и будет ' + (S.bank * 2) + '. Или в сейф?'
+      : 'Забрать в сейф или рискнуть ещё разок?';
+  }
+
+  S.busy = false;
+  setStage('choice');
+}
+
+// «ЕЩЁ!» — новый заход на ту же башню
+function onRisk(){
+  if (S.busy || S.stage !== 'choice') return;
+  if (S.used >= TOTAL_TASKS) {   // защита от тупика: заданий нет — только забирать
+    shake();
+    bigText('ЗАДАНИЙ НЕТ!', 'var(--orange)', 900);
+    return;
+  }
+  S.busy = true;
+  sRisk(levelIndex(S.bank));
+  bigText('ЕЩЁ РАЗОК!', 'var(--orange)', 700);
+  later(nextQuestion, 620);
+}
+
+// «ЗАБРАТЬ» — деньги в сейф, башня обнуляется
+function onTake(auto){
+  if (!auto && (S.busy || S.stage !== 'choice')) return;
+  S.busy = true;
+  const amount = S.bank;
+  if (amount <= 0) { later(nextQuestion, 200); return; }
+
+  setStage('wait');
+  coinsToSafe(amount);
+
+  later(function(){
+    S.safe += amount;
+    paintHeader();
+    elSafeChip.classList.remove('pop');
+    void elSafeChip.offsetWidth;
+    elSafeChip.classList.add('pop');
+    later(function(){ elSafeChip.classList.remove('pop'); }, 700);
+
+    S.levels = [];
+    S.bank = 0;
+    clearTower();
+    updateDanger();
+    updateBankNote();
+    if (!auto) bigText('В КАРМАНЕ!', 'var(--green)', 1100);
+    const r = elSafeChip.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2, 22, ['#FFDC5C', '#95E061', '#FFD93D']);
+  }, 780);
+
+  later(function(){ S.busy = false; nextQuestion(); }, 2100);
+}
+
+// Ошибка — обрушение
+function burnTower(){
+  S.burns++;
+  S.burnedPts += S.bank;
+  const lost = S.bank;
+
+  sBurn();
+  collapseTower();
+  shake();
+  bigText('ВСЁ СГОРЕЛО!', 'var(--red)', 1500);
+
+  const r = elTower.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 2, 52,
+        ['#FF4444', '#FF9F1C', '#FF3D8B', '#14102b', '#FFD93D']);
+
+  later(function(){
+    clearTower();
+    S.levels = [];
+    S.bank = 0;
+    updateDanger();
+    updateBankNote();
+
+    const q = S.current || FALLBACK_Q;
+    document.querySelector('#stageBurned .burn-line').textContent =
+      lost > 0 ? ('🔥 СГОРЕЛО ' + lost + ' ' + ochki(lost).toUpperCase() + ' 🔥') : '🔥 БАШНЯ РУХНУЛА 🔥';
+    $('burnAnswer').textContent = '✔ ' + q.answer;
+    $('burnHint').textContent = q.hint;
+
+    S.busy = false;
+    setStage('burned');
+  }, 1400);
+}
+
+// Дошёл до потолка
+function legend(){
+  sFanfare();
+  shake();
+  bigText('ЛЕГЕНДА!', 'var(--gold)', 1600);
+  const r = elTower.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 3, 58,
+        ['#FFDC5C', '#4ECDC4', '#FF3D8B', '#95E061', '#FFD93D', '#FF9F1C']);
+  later(function(){
+    burst(window.innerWidth * 0.25, window.innerHeight * 0.35, 30, ['#FFDC5C', '#FF3D8B', '#4ECDC4']);
+    burst(window.innerWidth * 0.75, window.innerHeight * 0.4, 30, ['#95E061', '#FFD93D', '#FF9F1C']);
+  }, 420);
+  later(function(){ onTake(true); }, 1700); // банк забирается автоматически
+}
+
+/* ============================================================
+   11. ФИНАЛ
+   ============================================================ */
+function finish(won){
+  if (S.over) return;
+  S.over = true;
+  S.stage = 'over';
+  S.busy = true;
+  elGlow.classList.remove('on');
+
+  const title = $('finalTitle');
+  title.textContent = won ? 'ТЫ БОГАЧ!' : 'ПАРТИЯ ОКОНЧЕНА';
+  title.style.color = won ? 'var(--gold)' : 'var(--cyan)';
+  $('finalSum').textContent = S.safe;
+
+  $('finalStats').innerHTML =
+    'Самая высокая башня: <b>' + (S.maxTower || 0) + '</b> · Сгорело раз: <b>' + S.burns + '</b><br>' +
+    'Заданий сыграно: <b>' + Math.min(S.used, TOTAL_TASKS) + '</b> из ' + TOTAL_TASKS;
+
+  let joke;
+  if (S.burnedPts === 0 && S.safe > 0) {
+    joke = 'Ты не сжёг НИ ОДНОГО очка. Железные нервы! 🧊';
+  } else if (S.burnedPts > 0 && S.burnedPts >= S.safe) {
+    joke = 'Ты сжёг ' + S.burnedPts + ' ' + ochki(S.burnedPts) + ' жадностью 🔥 Классика!';
+  } else if (S.burnedPts > 0) {
+    joke = 'Сжёг ' + S.burnedPts + ', спас ' + S.safe + '. Почти мастер! 😎';
+  } else {
+    joke = 'Сейф пуст. Зато башня была красивая. 🏗️';
+  }
+  $('finalJoke').textContent = joke;
+
+  if (won) {
+    sFanfare();
+    shake();
+    later(function(){
+      burst(window.innerWidth * 0.5, window.innerHeight * 0.4, 56,
+            ['#FFDC5C', '#FF3D8B', '#4ECDC4', '#95E061', '#FFD93D']);
+    }, 150);
+  } else {
+    tone(392, 0.35, 'triangle', 0.16, 0);
+    tone(330, 0.5, 'triangle', 0.14, 0.2);
+  }
+
+  later(function(){ $('finalWrap').classList.add('show'); }, won ? 900 : 500);
+}
+
+/* ============================================================
+   12. СТАРТ / РЕСТАРТ
+   ============================================================ */
+function resetGame(){
+  clearTimers();
+  S.safe = 0; S.levels = []; S.bank = 0; S.used = 0;
+  S.maxTower = 0; S.burns = 0; S.burnedPts = 0;
+  S.deck = shuffle(QUESTIONS); S.pos = 0;
+  S.current = null; S.stage = 'idle'; S.busy = false; S.over = false;
+
+  clearTower();
+  elFx.innerHTML = '';
+  elBig.classList.remove('show');
+  elBody.classList.remove('screen-shake');
+  elGlow.classList.remove('on');
+  $('finalWrap').classList.remove('show');
+  $('btnRisk').classList.remove('off');
+  $('btnRisk').style.setProperty('--rs', '1');
+
+  updateDanger();
+  paintHeader();
+  nextQuestion();
+}
+
+/* ============================================================
+   13. СОБЫТИЯ
+   ============================================================ */
+$('btnYes').addEventListener('click', function(){ verdict(true); });
+$('btnNo').addEventListener('click', function(){ verdict(false); });
+$('btnTake').addEventListener('click', function(){ onTake(false); });
+$('btnRisk').addEventListener('click', onRisk);
+$('btnNext').addEventListener('click', function(){
+  if (S.stage !== 'burned' || S.busy) return;
+  S.busy = true;
+  sClick();
+  nextQuestion();
+});
+$('btnRestart').addEventListener('click', function(){
+  sClick();
+  resetGame();
+});
+
+// Разбудить звук по первому касанию экрана
+window.addEventListener('pointerdown', function once(){
+  ensureAudio();
+  window.removeEventListener('pointerdown', once);
+}, {once: true});
+
+resetGame();
+</script>
+</body>
+</html>

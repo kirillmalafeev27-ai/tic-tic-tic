@@ -1,0 +1,1560 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ПОГОНЯ — немецкие глаголы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   ПАЛИТРА И БАЗА
+   ============================================================ */
+:root {
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+
+  --head: 'Bangers', 'Impact', 'Haettenschweiler', system-ui, sans-serif;
+  --text: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+
+  /* размер плитки дорожки — пересчитывается из JS (камера «отъезжает») */
+  --tile: 64px;
+  --step: 72px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;           /* горизонтального скролла у страницы нет никогда */
+  max-width: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--text);
+  color: #fff;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,61,139,.30), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(78,205,196,.24), transparent 42%),
+    radial-gradient(circle at 50% 92%, rgba(255,159,28,.22), transparent 48%),
+    linear-gradient(135deg, var(--bg), var(--bg-2));
+  background-attachment: fixed;
+  padding: 10px 10px 26px;
+}
+
+/* полутоновая сетка комикса поверх всего фона */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* затемнение фона по мере приближения монстра (отдельным слоем,
+   чтобы не вешать filter на body — иначе ломается position:fixed) */
+#dim {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  background: #0a0016;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity .5s ease;
+}
+body[data-danger="1"] #dim { opacity: .12; }
+body[data-danger="2"] #dim { opacity: .24; }
+body[data-danger="3"] #dim { opacity: .36; }
+
+.wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   ШАПКА
+   ============================================================ */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-family: var(--head);
+  font-size: clamp(2.6rem, 10vw, 5rem);
+  line-height: .95;
+  margin: 4px 0 0;
+  letter-spacing: 3px;
+  transform: rotate(-2deg);
+  background: linear-gradient(180deg, var(--yellow) 0%, var(--orange) 55%, var(--red) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(4px 4px 0 var(--ink));
+}
+
+.subtitle {
+  font-family: var(--text);
+  font-weight: 600;
+  font-size: clamp(.75rem, 2.6vw, 1rem);
+  color: rgba(255,255,255,.72);
+  transform: rotate(-1.5deg);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   ФИЗИЧЕСКИЕ КНОПКИ
+   ============================================================ */
+button {
+  font-family: var(--head);
+  cursor: pointer;
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  min-height: 44px;
+  color: var(--ink);
+  letter-spacing: 1.5px;
+}
+button:hover:not(:disabled) { transform: translate(-3px,-3px); box-shadow: 9px 9px 0 var(--ink); }
+button:active:not(:disabled) { transform: translate(4px,4px); box-shadow: 2px 2px 0 var(--ink); }
+button:disabled { opacity: .45; cursor: default; filter: grayscale(.5); }
+button:focus-visible { outline: 4px dashed var(--cyan); outline-offset: 4px; }
+
+.snd {
+  flex: 0 0 auto;
+  width: 56px; height: 56px;
+  min-width: 44px;
+  font-size: 1.5rem;
+  background: var(--cyan);
+  border-radius: 16px;
+  transform: rotate(2deg);
+}
+.snd:hover:not(:disabled) { transform: rotate(2deg) translate(-3px,-3px); }
+.snd:active:not(:disabled) { transform: rotate(2deg) translate(4px,4px); }
+
+/* ============================================================
+   ИНДИКАТОР ОТРЫВА — главный прибор игры
+   ============================================================ */
+.hud {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gauge {
+  flex: 1 1 240px;
+  max-width: 620px;
+  background: linear-gradient(160deg, #fffbe8, #ffe9a8);
+  border: 5px solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--ink);
+  transform: rotate(-1deg);
+  padding: 6px 16px 10px;
+  color: var(--ink);
+  text-align: center;
+  transition: background .35s ease, transform .2s ease;
+}
+.gauge .label {
+  font-family: var(--head);
+  font-size: clamp(.9rem, 3vw, 1.25rem);
+  letter-spacing: 3px;
+  opacity: .8;
+}
+.gauge .value {
+  font-family: var(--head);
+  font-size: clamp(2.6rem, 11vw, 4.4rem);
+  line-height: .9;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+.gauge .value .num { transition: color .25s ease, transform .25s ease; }
+.gauge .value .word {
+  font-size: clamp(.9rem, 3.4vw, 1.5rem);
+  letter-spacing: 2px;
+}
+
+.stats-mini {
+  flex: 0 1 auto;
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  background: var(--bg-2);
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 8px 14px;
+  min-width: 92px;
+  text-align: center;
+  transform: rotate(1.5deg);
+}
+.chip:nth-child(2) { transform: rotate(-1.5deg); }
+.chip .k { font-family: var(--text); font-size: .72rem; opacity: .75; letter-spacing: 1px; }
+.chip .v { font-family: var(--head); font-size: 1.9rem; line-height: 1; color: var(--yellow); }
+
+/* тревога: чем меньше отрыв, тем краснее прибор */
+body[data-danger="1"] .gauge { background: linear-gradient(160deg, #ffeede, #ffd0b0); }
+body[data-danger="2"] .gauge { background: linear-gradient(160deg, #ffd9d9, #ffb3b3); }
+body[data-danger="3"] .gauge { background: linear-gradient(160deg, #ffc2c2, #ff8f8f); }
+
+body[data-danger="1"] .gauge .num { color: #d34a00; }
+body[data-danger="2"] .gauge .num { color: #c40000; }
+body[data-danger="3"] .gauge .num { color: #a30000; }
+
+body[data-danger="1"] .gauge .num { animation: pulseNum 1.1s ease-in-out infinite; }
+body[data-danger="2"] .gauge .num { animation: pulseNum .75s ease-in-out infinite; }
+body[data-danger="3"] .gauge .num { animation: pulseNum .42s ease-in-out infinite; }
+
+@keyframes pulseNum {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.16); }
+}
+
+/* ============================================================
+   ВИНЬЕТКА ТРЕВОГИ
+   ============================================================ */
+#vignette {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0;
+  box-shadow: inset 0 0 90px 0 rgba(190,0,0,.75);
+  transition: opacity .5s ease, box-shadow .5s ease;
+}
+body[data-danger="1"] #vignette { opacity: .55; }
+body[data-danger="2"] #vignette { opacity: .8; animation: breathe 1.6s ease-in-out infinite;
+  box-shadow: inset 0 0 110px 8px rgba(205,0,0,.8); }
+body[data-danger="3"] #vignette { opacity: 1; animation: breathe .95s ease-in-out infinite;
+  box-shadow: inset 0 0 130px 18px rgba(225,0,0,.85); }
+
+@keyframes breathe {
+  0%,100% { filter: brightness(.9)  saturate(1); }
+  50%     { filter: brightness(1.2) saturate(1.15); }
+}
+
+/* ============================================================
+   ДОРОЖКА (камера едет внутри контейнера, скроллбара нет)
+   ============================================================ */
+#viewport {
+  position: relative;
+  overflow: hidden;                /* дорожка обрезается, а не скроллится */
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.05) 40%, rgba(0,0,0,.35)),
+    linear-gradient(90deg, #3a2a7e, #241a5c);
+  height: 178px;
+  transform: rotate(-.6deg);
+  margin-bottom: 10px;
+  transition: box-shadow .3s ease;
+}
+body[data-danger="2"] #viewport { box-shadow: 6px 6px 0 var(--ink), 0 0 0 3px rgba(255,60,60,.55); }
+body[data-danger="3"] #viewport { box-shadow: 6px 6px 0 var(--ink), 0 0 0 5px rgba(255,40,40,.9); }
+
+#track {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  will-change: transform;
+  transition: transform .55s cubic-bezier(.25,.8,.35,1);
+}
+
+.tile {
+  position: absolute;
+  top: 96px;
+  width: var(--tile);
+  height: 40px;
+  border: 4px solid var(--ink);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #6b5bc4, #4a3b96);
+  box-shadow: 0 5px 0 rgba(0,0,0,.45);
+  font-family: var(--head);
+  font-size: .95rem;
+  color: rgba(255,255,255,.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left .45s cubic-bezier(.25,.8,.35,1), width .45s ease, background .3s ease;
+}
+.tile.odd { background: linear-gradient(180deg, #5b4bb4, #3e3184); }
+.tile.finish {
+  background: linear-gradient(180deg, var(--gold), var(--orange));
+  color: var(--ink);
+  font-size: 1.4rem;
+  box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 26px 6px rgba(255,220,92,.75);
+  animation: finishGlow 1.4s ease-in-out infinite;
+}
+@keyframes finishGlow {
+  0%,100% { box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 20px 4px rgba(255,220,92,.55); }
+  50%     { box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 40px 12px rgba(255,220,92,1); }
+}
+
+/* фигурки */
+.token {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: var(--tile);
+  height: 66px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  will-change: transform;
+}
+#hero  { transition: transform .5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 6; }
+#monster { transition: transform .45s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 5; }
+
+.token .body {
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,.55));
+  transform-origin: 50% 100%;
+}
+
+#hero .body { animation: heroIdle 1.5s ease-in-out infinite; }
+@keyframes heroIdle {
+  0%,100% { transform: translateY(0) scale(1,1); }
+  50%     { transform: translateY(-4px) scale(.97,1.03); }
+}
+#hero.jump .body { animation: heroJump .5s ease-out; }
+@keyframes heroJump {
+  0%   { transform: translateY(0) rotate(0deg) scale(1.15,.85); }
+  25%  { transform: translateY(-52px) rotate(-14deg) scale(.9,1.15); }
+  50%  { transform: translateY(-64px) rotate(-8deg) scale(1,1); }
+  80%  { transform: translateY(-10px) rotate(6deg) scale(1.05,.95); }
+  100% { transform: translateY(0) rotate(0deg) scale(1.2,.8); }
+}
+#hero.stuck .body { animation: heroStuck .45s ease-in-out; }
+@keyframes heroStuck {
+  0%,100% { transform: translateX(0) rotate(0deg); }
+  20%  { transform: translateX(-7px) rotate(-9deg); }
+  45%  { transform: translateX(6px) rotate(8deg); }
+  70%  { transform: translateX(-4px) rotate(-5deg); }
+}
+
+/* монстр всегда «шагает» на месте, вблизи — крупнее и трясётся */
+#monster .body { animation: monsterWalk .62s ease-in-out infinite; }
+@keyframes monsterWalk {
+  0%,100% { transform: rotate(-7deg) translateY(0)    scale(1,1); }
+  25%     { transform: rotate(0deg)  translateY(-7px) scale(.96,1.06); }
+  50%     { transform: rotate(7deg)  translateY(0)    scale(1.04,.96); }
+  75%     { transform: rotate(0deg)  translateY(-5px) scale(.98,1.03); }
+}
+body[data-danger="1"] #monster .body { font-size: clamp(2.2rem, 8vw, 3.4rem); animation-duration: .5s; }
+body[data-danger="2"] #monster .body { font-size: clamp(2.5rem, 9vw, 3.9rem); animation-duration: .34s;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(255,0,0,.8)); }
+body[data-danger="3"] #monster .body { font-size: clamp(2.9rem, 11vw, 4.6rem); animation-duration: .2s;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(255,0,0,1)); }
+
+#monster.lurch .body { animation: monsterLurch .45s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+@keyframes monsterLurch {
+  0%   { transform: scale(1.3,.7) rotate(0deg); }
+  35%  { transform: translateY(-26px) scale(.85,1.25) rotate(-12deg); }
+  70%  { transform: translateY(-6px) scale(1.15,.9) rotate(10deg); }
+  100% { transform: scale(1,1) rotate(0deg); }
+}
+
+/* «дыхание» монстра — красная тень под ним, когда он близко */
+#monster::after {
+  content: "";
+  position: absolute;
+  bottom: -4px; left: 50%;
+  width: 70%; height: 14px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,0,0,.55), transparent 70%);
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+body[data-danger="2"] #monster::after { opacity: .8; }
+body[data-danger="3"] #monster::after { opacity: 1; }
+
+/* короткая реплика над дорожкой («ОН БЛИЗКО!») — мельче главного оверлея */
+#whisper {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  font-family: var(--head);
+  font-size: clamp(1.5rem, 5.5vw, 2.6rem);
+  letter-spacing: 2px;
+  color: var(--yellow);
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9;
+  white-space: nowrap;
+}
+#whisper.show { animation: whisperPop 1.15s ease-out; }
+@keyframes whisperPop {
+  0%   { opacity: 0; transform: translateX(-50%) rotate(-3deg) scale(.4); }
+  18%  { opacity: 1; transform: translateX(-50%) rotate(-3deg) scale(1.25); }
+  32%  { transform: translateX(-50%) rotate(-3deg) scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) rotate(-3deg) scale(1.05) translateY(-14px); }
+}
+
+/* ============================================================
+   РАЗБОР ПОСЛЕДНЕЙ ОШИБКИ
+   ============================================================ */
+#lastMiss {
+  display: none;
+  background: #fff3f3;
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  transform: rotate(.8deg);
+  font-size: clamp(.82rem, 2.7vw, 1rem);
+  font-weight: 600;
+}
+#lastMiss.show { display: block; animation: popIn .35s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+#lastMiss b { color: #c40000; }
+
+/* ============================================================
+   КАРТОЧКА ЗАДАНИЯ
+   ============================================================ */
+.card {
+  background: linear-gradient(160deg, #fffdf4, #ffeecb);
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 14px 16px 16px;
+  transform: rotate(.7deg);
+  text-align: center;
+}
+.card .tag {
+  font-family: var(--head);
+  letter-spacing: 3px;
+  font-size: clamp(.85rem, 3vw, 1.15rem);
+  color: #6b5bc4;
+}
+#prompt {
+  font-family: var(--text);
+  font-weight: 700;
+  font-size: clamp(1.35rem, 6vw, 2.5rem);
+  line-height: 1.15;
+  margin: 4px 0 8px;
+  word-break: break-word;
+}
+#prompt.swap { animation: popIn .4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+@keyframes popIn {
+  0%   { transform: scale(.5) rotate(-6deg); opacity: 0; }
+  60%  { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+#answerBox {
+  min-height: 34px;
+  font-family: var(--head);
+  font-size: clamp(1.2rem, 5vw, 2rem);
+  letter-spacing: 1px;
+  color: #1a7a1a;
+  margin-bottom: 6px;
+}
+#answerBox.show { animation: popIn .35s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.big-btn {
+  flex: 1 1 180px;
+  max-width: 320px;
+  font-size: clamp(1.2rem, 4.6vw, 1.9rem);
+  padding: 12px 10px;
+  min-height: 62px;
+}
+.ok  { background: var(--green); transform: rotate(-1.2deg); }
+.ok:hover:not(:disabled)  { transform: rotate(-1.2deg) translate(-3px,-3px); }
+.ok:active:not(:disabled) { transform: rotate(-1.2deg) translate(4px,4px); }
+.no  { background: var(--red); color: #fff; transform: rotate(1.2deg); }
+.no:hover:not(:disabled)  { transform: rotate(1.2deg) translate(-3px,-3px); }
+.no:active:not(:disabled) { transform: rotate(1.2deg) translate(4px,4px); }
+
+.reveal-btn {
+  background: var(--cyan);
+  font-size: clamp(.9rem, 3vw, 1.15rem);
+  padding: 8px 16px;
+  border-radius: 14px;
+  margin-top: 10px;
+}
+
+.hintline {
+  font-family: var(--text);
+  font-size: .8rem;
+  opacity: .65;
+  margin-top: 10px;
+  color: var(--ink);
+}
+
+/* ============================================================
+   БОЛЬШОЙ ОВЕРЛЕЙ («АМ!», «УШЁЛ!!!», «ОН РЯДОМ!»)
+   ============================================================ */
+#shout {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 70;
+  pointer-events: none;
+  text-align: center;
+  padding: 10px;
+}
+#shout.show { display: flex; }
+#shout span {
+  font-family: var(--head);
+  font-size: clamp(4rem, 16vw, 9rem);
+  line-height: .92;
+  letter-spacing: 4px;
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  color: var(--yellow);
+  animation: shoutIn .55s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  text-shadow: 0 0 40px rgba(0,0,0,.6);
+}
+#shout.bad span  { color: var(--red); }
+#shout.good span { color: var(--green); }
+@keyframes shoutIn {
+  0%   { transform: scale(.2) rotate(-16deg); opacity: 0; }
+  55%  { transform: scale(1.25) rotate(5deg); opacity: 1; }
+  75%  { transform: scale(.95) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* чёрная вспышка при поедании */
+#blackout {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  background: #000;
+  opacity: 0;
+  z-index: 65;
+  pointer-events: none;
+  transition: opacity .18s linear;
+}
+#blackout.on { opacity: 1; }
+
+/* слой частиц */
+#fx {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 80;
+}
+.particle {
+  position: absolute;
+  border-radius: 3px;
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   ТРЯСКА ЭКРАНА
+   ============================================================ */
+.screen-shake { animation: shake .5s ease-in-out; }
+@keyframes shake {
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  10% { transform: translate(-8px,4px) rotate(-.6deg); }
+  25% { transform: translate(7px,-6px) rotate(.7deg); }
+  40% { transform: translate(-6px,-3px) rotate(-.5deg); }
+  55% { transform: translate(6px,5px) rotate(.5deg); }
+  70% { transform: translate(-4px,2px) rotate(-.3deg); }
+  85% { transform: translate(3px,-2px) rotate(.2deg); }
+}
+.screen-shake-hard { animation: shakeHard .55s ease-in-out; }
+@keyframes shakeHard {
+  0%,100% { transform: translate(0,0) rotate(0deg); }
+  8%  { transform: translate(-20px,12px) rotate(-1.8deg); }
+  20% { transform: translate(18px,-16px) rotate(2deg); }
+  32% { transform: translate(-16px,-10px) rotate(-1.6deg); }
+  46% { transform: translate(16px,14px) rotate(1.4deg); }
+  60% { transform: translate(-12px,8px) rotate(-1deg); }
+  74% { transform: translate(10px,-6px) rotate(.8deg); }
+  88% { transform: translate(-6px,3px) rotate(-.4deg); }
+}
+
+/* ============================================================
+   МОДАЛКИ (стартовая и финальная)
+   ============================================================ */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; height: 100vh;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(10,6,30,.82);
+}
+.modal.show { display: flex; }
+.modal .panel {
+  background: linear-gradient(160deg, #fffdf4, #ffe9bd);
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 20px 18px 22px;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  transform: rotate(-1.2deg);
+  animation: popIn .45s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.modal h2 {
+  font-family: var(--head);
+  font-size: clamp(2.2rem, 9vw, 3.6rem);
+  margin: 0 0 6px;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+.modal .lead {
+  font-weight: 600;
+  font-size: clamp(.95rem, 3.4vw, 1.2rem);
+  margin-bottom: 12px;
+}
+.rules {
+  text-align: left;
+  font-size: clamp(.85rem, 3vw, 1.02rem);
+  line-height: 1.5;
+  margin: 0 auto 14px;
+  max-width: 420px;
+}
+.rules li { margin-bottom: 5px; }
+
+.statgrid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 12px 0 8px;
+}
+.statgrid .s {
+  background: var(--bg-2);
+  color: #fff;
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  padding: 8px 12px;
+  min-width: 96px;
+  transform: rotate(-1deg);
+}
+.statgrid .s:nth-child(2) { transform: rotate(1.4deg); }
+.statgrid .s:nth-child(3) { transform: rotate(-1.6deg); }
+.statgrid .s .k { font-size: .68rem; opacity: .8; letter-spacing: .5px; }
+.statgrid .s .v { font-family: var(--head); font-size: 1.9rem; color: var(--yellow); line-height: 1; }
+
+.hintcard {
+  background: #fff;
+  border: 4px dashed var(--ink);
+  border-radius: 16px;
+  padding: 10px 12px;
+  margin: 10px 0 4px;
+  text-align: left;
+  font-size: clamp(.85rem, 3vw, 1rem);
+  line-height: 1.4;
+}
+.hintcard .h {
+  font-family: var(--head);
+  letter-spacing: 2px;
+  font-size: 1.1rem;
+  color: #c40000;
+  display: block;
+  margin-bottom: 2px;
+}
+.hintcard .q { font-weight: 700; }
+
+.start-btn {
+  background: var(--yellow);
+  font-size: clamp(1.4rem, 5.5vw, 2.1rem);
+  padding: 12px 26px;
+  margin-top: 8px;
+  transform: rotate(-1.5deg);
+}
+.start-btn:hover:not(:disabled)  { transform: rotate(-1.5deg) translate(-3px,-3px); }
+.start-btn:active:not(:disabled) { transform: rotate(-1.5deg) translate(4px,4px); }
+
+.foot {
+  text-align: center;
+  font-size: .74rem;
+  opacity: .5;
+  margin-top: 12px;
+}
+
+/* ============================================================
+   ЩАДЯЩИЙ РЕЖИМ: без тряски и без разлёта частиц
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .screen-shake, .screen-shake-hard { animation: none !important; }
+  #vignette { animation: none !important; }
+  .gauge .value .num { animation: none !important; }
+  #hero .body, #monster .body, #hero.jump .body, #monster.lurch .body,
+  .tile.finish { animation: none !important; }
+  #hero, #monster, #track, .tile { transition-duration: .01s !important; }
+  #shout span, .modal .panel, #prompt.swap, #lastMiss.show, #answerBox.show { animation: none !important; }
+  #whisper.show { animation: whisperStatic 1.15s linear; }
+  @keyframes whisperStatic { 0%,85% { opacity: 1; } 100% { opacity: 0; } }
+  * { scroll-behavior: auto !important; }
+}
+
+/* телефон: прибор, дорожка и кнопки должны помещаться в один экран */
+@media (max-width: 520px) {
+  body { padding: 8px 8px 16px; }
+  #viewport { height: 150px; }
+  .tile { top: 82px; }
+  .token { top: 22px; }
+  h1 { letter-spacing: 2px; }
+  .subtitle { font-size: .72rem; }
+  .hud { gap: 6px; flex-wrap: nowrap; }
+  .gauge { flex: 1 1 140px; padding: 2px 8px 6px; border-radius: 16px; }
+  .gauge .label { letter-spacing: 2px; }
+  .chip { min-width: 62px; padding: 4px 6px; border-radius: 14px; }
+  .chip .k { font-size: .6rem; }
+  .chip .v { font-size: 1.4rem; }
+  .card { padding: 10px 12px 12px; }
+  #answerBox { min-height: 26px; }
+  .buttons { gap: 8px; }
+  .big-btn { flex: 1 1 130px; min-height: 54px; padding: 8px 6px; border-radius: 16px; }
+  .reveal-btn { margin-top: 8px; padding: 7px 12px; }
+  .hintline { margin-top: 6px; font-size: .72rem; }
+  .foot { display: none; }
+}
+</style>
+
+<div id="dim"></div>
+<div id="vignette"></div>
+<div id="blackout"></div>
+<div id="fx"></div>
+
+<div class="wrap">
+
+  <!-- ШАПКА -->
+  <div class="top">
+    <div>
+      <h1>ПОГОНЯ</h1>
+      <div class="subtitle">Весь класс против монстра. Отвечаем вслух — заяц бежит.</div>
+    </div>
+    <button class="snd" id="sndBtn" title="Звук" aria-label="Включить или выключить звук">🔊</button>
+  </div>
+
+  <!-- ПРИБОРЫ -->
+  <div class="hud">
+    <div class="gauge">
+      <div class="label">ОТРЫВ</div>
+      <div class="value"><span class="num" id="gapNum">4</span><span class="word" id="gapWord">клетки</span></div>
+    </div>
+    <div class="stats-mini">
+      <div class="chip"><div class="k">ХОД</div><div class="v" id="turnNum">1</div></div>
+      <div class="chip"><div class="k">ВЕРНО</div><div class="v" id="okNum">0</div></div>
+    </div>
+  </div>
+
+  <!-- ДОРОЖКА -->
+  <div id="viewport">
+    <div id="track">
+      <div class="token" id="monster"><div class="body">👹</div></div>
+      <div class="token" id="hero"><div class="body">🐰</div></div>
+    </div>
+    <div id="whisper"></div>
+  </div>
+
+  <!-- РАЗБОР ПРОШЛОЙ ОШИБКИ -->
+  <div id="lastMiss"></div>
+
+  <!-- ЗАДАНИЕ -->
+  <div class="card">
+    <div class="tag">ЗАДАНИЕ</div>
+    <div id="prompt">—</div>
+    <div id="answerBox"></div>
+    <div class="buttons">
+      <button class="big-btn ok" id="btnOk">✅ ВЕРНО</button>
+      <button class="big-btn no" id="btnNo">❌ МИМО</button>
+    </div>
+    <button class="reveal-btn" id="btnReveal">🔍 Показать ответ</button>
+    <div class="hintline">Ребёнок отвечает вслух — учитель жмёт кнопку.</div>
+  </div>
+
+  <div class="foot">20 клеток до спасения · монстр делает 1–3 шага после каждого хода</div>
+</div>
+
+<!-- БОЛЬШОЙ ОВЕРЛЕЙ -->
+<div id="shout"><span id="shoutText"></span></div>
+
+<!-- СТАРТОВОЕ ОКНО -->
+<div class="modal" id="startModal">
+  <div class="panel">
+    <h2>ПОГОНЯ 🐰💨👹</h2>
+    <div class="lead">Заяц бежит к финишу. Монстр бежит за зайцем. Спасаем вместе!</div>
+    <ul class="rules">
+      <li>🗣️ Читаем задание — класс отвечает вслух.</li>
+      <li>✅ Верно → заяц прыгает на <b>2 клетки</b>.</li>
+      <li>❌ Ошибка → заяц стоит на месте.</li>
+      <li>👹 После каждого хода монстр делает <b>1, 2 или 3</b> шага. Сколько — не знает никто.</li>
+      <li>🏁 Добежали до 20-й клетки — спаслись. Догнал — съел.</li>
+    </ul>
+    <button class="start-btn" id="btnStart">🏃 БЕЖИМ!</button>
+  </div>
+</div>
+
+<!-- ФИНАЛЬНОЕ ОКНО -->
+<div class="modal" id="endModal">
+  <div class="panel">
+    <h2 id="endTitle">—</h2>
+    <div class="lead" id="endLead">—</div>
+    <div class="statgrid">
+      <div class="s"><div class="k">ХОДОВ ПРОДЕРЖАЛИСЬ</div><div class="v" id="stTurns">0</div></div>
+      <div class="s"><div class="k">МАКС. ОТРЫВ</div><div class="v" id="stMax">0</div></div>
+      <div class="s"><div class="k">ВЕРНЫХ ОТВЕТОВ</div><div class="v" id="stOk">0</div></div>
+    </div>
+    <div class="hintcard" id="endHint"></div>
+    <button class="start-btn" id="btnAgain">🔄 Ещё разок</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// БАНК ЗАДАНИЙ
+// ============================================================
+
+// ⬇️ ЗАМЕНИ ЭТОТ СПИСОК, ЧТОБЫ ИГРАТЬ В ЛЮБУЮ ДРУГУЮ ТЕМУ.
+// Формат: prompt — что показываем, answer — правильный ответ, hint — объяснение правила.
+const QUESTIONS = [
+  {prompt: "ich + machen (делать)",      answer: "ich mache",   hint: "После ich → окончание -e. Основа mach- + e = mache"},
+  {prompt: "du + spielen (играть)",      answer: "du spielst",  hint: "После du → окончание -st. Основа spiel- + st = spielst"},
+  {prompt: "er + lernen (учить)",        answer: "er lernt",    hint: "После er/sie/es → окончание -t. Основа lern- + t = lernt"},
+  {prompt: "sie + malen (рисовать)",     answer: "sie malt",    hint: "После sie (она) → окончание -t. Основа mal- + t = malt"},
+  {prompt: "es + kommen (приходить)",    answer: "es kommt",    hint: "После es → окончание -t. Основа komm- + t = kommt"},
+  {prompt: "wir + wohnen (жить)",        answer: "wir wohnen",  hint: "После wir → окончание -en, как инфинитив. wohn- + en = wohnen"},
+  {prompt: "ihr + singen (петь)",        answer: "ihr singt",   hint: "После ihr → окончание -t. Основа sing- + t = singt"},
+  {prompt: "sie + trinken (пить)",       answer: "sie trinken", hint: "После sie (они) → окончание -en. Основа trink- + en = trinken"},
+  {prompt: "du + heißen (зваться)",      answer: "du heißt",    hint: "⚠️ ХИТРО! Основа уже кончается на ß (heiß-), поэтому только -t, а не -st. du heißt, НЕ du heißst"},
+  {prompt: "ihr + tanzen (танцевать)",   answer: "ihr tanzt",   hint: "Основа tanz- + t = tanzt. Произносим «танцт»"},
+  {prompt: "ich + sein (быть)",          answer: "ich bin",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ глагол! Учим наизусть: ich BIN"},
+  {prompt: "du + sein (быть)",           answer: "du bist",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: du BIST"},
+  {prompt: "er + sein (быть)",           answer: "er ist",      hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: er/sie/es IST"},
+  {prompt: "wir + sein (быть)",          answer: "wir sind",    hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! wir SIND"},
+  {prompt: "ich + haben (иметь)",        answer: "ich habe",    hint: "В форме ich окончание обычное: hab- + e = habe"},
+  {prompt: "du + haben (иметь)",         answer: "du hast",     hint: "🌟 haben — НЕПРАВИЛЬНЫЙ в du и er! Буква -b- ПРОПАДАЕТ: du HAST (не habst)"},
+  {prompt: "er + haben (иметь)",         answer: "er hat",      hint: "🌟 haben — НЕПРАВИЛЬНЫЙ! Буква -b- ПРОПАДАЕТ: er HAT (не habt)"},
+  {prompt: "ihr + haben (иметь)",        answer: "ihr habt",    hint: "У ihr всё честно: hab- + t = habt"},
+  {prompt: "du + arbeiten (работать)",   answer: "du arbeitest",hint: "⚠️ Основа кончается на -t (arbeit-), между основой и окончанием вставляем -e-: arbeit-e-st"},
+  {prompt: "er + finden (находить)",     answer: "er findet",   hint: "⚠️ Основа кончается на -d (find-), вставляем -e-: find-e-t = findet"},
+  {prompt: "wir + gehen (идти)",         answer: "wir gehen",   hint: "После wir → -en. geh- + en = gehen"},
+  {prompt: "ihr + lesen (читать)",       answer: "ihr lest",    hint: "Основа кончается на -s (les-), поэтому только -t: lest"},
+  {prompt: "du + fahren (ехать)",        answer: "du fährst",   hint: "🌟 Корневая гласная меняется: a → ä. du FÄHRST"},
+  {prompt: "er + sprechen (говорить)",   answer: "er spricht",  hint: "🌟 Корневая гласная меняется: e → i. er SPRICHT"}
+];
+
+// ============================================================
+// ПРАВИЛА И БАЛАНС
+// ------------------------------------------------------------
+// Дорожка 0..20, финиш на 20. Монстр стартует с 0.
+// Заяц стартует с 4-й клетки (отрыв 4). Проверка математики:
+// при +2 за верный ответ и 1–3 (в среднем 2) шагах монстра отрыв —
+// «случайное блуждание» без сноса, партия длится 8–10 ходов.
+// Со стартом на клетке 3 при 80% верных ответов выживаемость падает
+// до ~26% и партия обрывается на 6-м ходу — безнадёжно; на клетке 4
+// это ~43% при 80% и ~68% при 90%: напряжённо, но выигрышно.
+// ============================================================
+const FINISH        = 20;   // номер финишной клетки
+const HERO_START    = 4;    // старт зайца
+const MONSTER_START = 0;    // старт монстра
+const HERO_STEP     = 2;    // шаг зайца за верный ответ
+const MON_MIN       = 1;    // минимальный бросок монстра
+const MON_MAX       = 3;    // максимальный бросок монстра
+const PAUSE_MS      = 500;  // ПАУЗА между ходом зайца и ходом монстра — источник напряжения
+
+// ============================================================
+// ССЫЛКИ НА DOM
+// ============================================================
+const $ = function (id) { return document.getElementById(id); };
+const viewport  = $('viewport');
+const track     = $('track');
+const heroEl    = $('hero');
+const monsterEl = $('monster');
+const fxLayer   = $('fx');
+const gapNum    = $('gapNum');
+const gapWord   = $('gapWord');
+const turnNum   = $('turnNum');
+const okNum     = $('okNum');
+const promptEl  = $('prompt');
+const answerBox = $('answerBox');
+const lastMiss  = $('lastMiss');
+const btnOk     = $('btnOk');
+const btnNo     = $('btnNo');
+const btnReveal = $('btnReveal');
+const shout     = $('shout');
+const shoutText = $('shoutText');
+const blackout  = $('blackout');
+const startModal= $('startModal');
+const endModal  = $('endModal');
+
+// ============================================================
+// ТАЙМЕРЫ — все id храним, чтобы рестарт чистил всё до нуля
+// ============================================================
+const timers = new Set();
+function later(fn, ms) {
+  const id = setTimeout(function () { timers.delete(id); fn(); }, ms);
+  timers.add(id);
+  return id;
+}
+function clearTimers() {
+  timers.forEach(function (id) { clearTimeout(id); });
+  timers.clear();
+}
+
+// ============================================================
+// ЩАДЯЩИЙ РЕЖИМ
+// ============================================================
+function reduced() {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (e) { return false; }
+}
+
+// ============================================================
+// ЗВУК: Web Audio, контекст создаётся лениво по первому жесту
+// ============================================================
+let audioCtx = null;
+let soundOn = true;
+try {
+  soundOn = localStorage.getItem('pogonya-sound') !== 'off';
+} catch (e) { soundOn = true; }
+
+function ensureAudio() {
+  if (audioCtx) { return audioCtx; }
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { return null; }
+    audioCtx = new AC();
+  } catch (e) { audioCtx = null; }
+  return audioCtx;
+}
+
+// один тон с конвертом громкости
+function tone(freq, startAt, dur, type, vol, endFreq) {
+  try {
+    const ctx = ensureAudio();
+    if (!ctx || !soundOn) { return; }
+    const t0 = ctx.currentTime + startAt;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    if (endFreq) { osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t0 + dur); }
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  } catch (e) { /* без звука играть всё равно можно */ }
+}
+
+// шум (для удара и «АМ!»)
+function noise(startAt, dur, vol, filterHz) {
+  try {
+    const ctx = ensureAudio();
+    if (!ctx || !soundOn) { return; }
+    const t0 = ctx.currentTime + startAt;
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) { data[i] = (Math.random() * 2 - 1) * (1 - i / len); }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = filterHz || 600;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol || 0.25, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(lp); lp.connect(g); g.connect(ctx.destination);
+    src.start(t0); src.stop(t0 + dur + 0.02);
+  } catch (e) { /* тишина */ }
+}
+
+const SFX = {
+  click: function () { tone(420, 0, 0.09, 'square', 0.10); },
+  correct: function () {              // восходящее арпеджио
+    tone(523, 0,    0.13, 'triangle', 0.20);
+    tone(659, 0.10, 0.13, 'triangle', 0.20);
+    tone(784, 0.20, 0.15, 'triangle', 0.22);
+    tone(1046,0.31, 0.24, 'triangle', 0.20);
+  },
+  wrong: function () {                // низкий нисходящий
+    tone(220, 0,    0.22, 'sawtooth', 0.18, 90);
+    tone(110, 0.16, 0.30, 'sawtooth', 0.16, 55);
+  },
+  hop: function () { tone(560, 0, 0.10, 'sine', 0.12, 900); },
+  stomp: function (steps) {           // глухой удар шагов монстра
+    const base = 90 - steps * 12;
+    tone(base, 0, 0.18 + steps * 0.05, 'sine', 0.22, base * 0.5);
+    noise(0, 0.16 + steps * 0.04, 0.12 + steps * 0.05, 320);
+    if (steps >= 3) { tone(55, 0.12, 0.4, 'sine', 0.26, 30); }
+  },
+  tension: function () {              // сердцебиение в паузе
+    tone(70, 0,    0.12, 'sine', 0.16, 45);
+    tone(70, 0.22, 0.14, 'sine', 0.13, 42);
+  },
+  eaten: function () {                // «АМ!»
+    noise(0, 0.7, 0.4, 220);
+    tone(160, 0,    0.55, 'sawtooth', 0.26, 40);
+    tone(80,  0.12, 0.8,  'square',   0.22, 26);
+  },
+  fanfare: function () {              // финальный фанфар
+    const notes = [523, 659, 784, 1046, 784, 1046, 1318];
+    for (let i = 0; i < notes.length; i++) {
+      tone(notes[i], i * 0.12, 0.30, 'triangle', 0.20);
+    }
+    tone(1568, 0.86, 0.7, 'triangle', 0.22);
+  }
+};
+
+function updateSndBtn() { $('sndBtn').textContent = soundOn ? '🔊' : '🔇'; }
+$('sndBtn').addEventListener('click', function () {
+  soundOn = !soundOn;
+  try { localStorage.setItem('pogonya-sound', soundOn ? 'on' : 'off'); } catch (e) { /* приват-режим */ }
+  updateSndBtn();
+  if (soundOn) { ensureAudio(); SFX.click(); }
+});
+updateSndBtn();
+
+// ============================================================
+// ЧАСТИЦЫ
+// ============================================================
+function rnd(a, b) { return a + Math.random() * (b - a); }
+
+function animateEl(el, frames, dur, easing) {
+  if (typeof el.animate === 'function') {
+    try {
+      const a = el.animate(frames, { duration: dur, easing: easing || 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+      a.onfinish = function () { el.remove(); };
+      a.oncancel = function () { el.remove(); };
+      return;
+    } catch (e) { /* упадём на таймер */ }
+  }
+  later(function () { el.remove(); }, dur);
+}
+
+// веер частиц из точки экрана
+function burst(x, y, opt) {
+  if (reduced()) { return; }
+  const count = opt.count || 30;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = rnd(opt.size ? opt.size[0] : 6, opt.size ? opt.size[1] : 14);
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = (x - size / 2) + 'px';
+    p.style.top = (y - size / 2) + 'px';
+    p.style.background = opt.colors[Math.floor(Math.random() * opt.colors.length)];
+    if (opt.round) { p.style.borderRadius = '50%'; }
+    if (opt.blur) { p.style.filter = 'blur(1px)'; }
+    fxLayer.appendChild(p);
+
+    const ang = opt.angle !== undefined
+      ? opt.angle + rnd(-opt.spread, opt.spread)
+      : rnd(0, Math.PI * 2);
+    const dist = rnd(opt.dist ? opt.dist[0] : 60, opt.dist ? opt.dist[1] : 190);
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist;
+    const gravity = opt.gravity === undefined ? 90 : opt.gravity;
+    const dur = rnd(opt.dur ? opt.dur[0] : 550, opt.dur ? opt.dur[1] : 1000);
+
+    animateEl(p, [
+      { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1 },
+      { transform: 'translate(' + (dx * 0.6) + 'px,' + (dy * 0.6 + gravity * 0.15) + 'px) scale(1.05) rotate(' + rnd(-120, 120) + 'deg)', opacity: 1, offset: 0.55 },
+      { transform: 'translate(' + dx + 'px,' + (dy + gravity) + 'px) scale(.2) rotate(' + rnd(-360, 360) + 'deg)', opacity: 0 }
+    ], dur);
+  }
+}
+
+// центр элемента в координатах экрана
+function centerOf(el) {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// облачко пыли под зайцем
+function dust() {
+  const c = centerOf(heroEl);
+  burst(c.x, c.y + 22, {
+    count: 16, colors: ['#d9d2ff', '#b9aef0', '#ffffff'],
+    size: [6, 16], dist: [30, 90], dur: [400, 700], round: true, gravity: 20, blur: true
+  });
+}
+
+// тёмный след за монстром
+function monsterTrail(steps) {
+  const c = centerOf(monsterEl);
+  burst(c.x - 10, c.y + 14, {
+    count: 10 + steps * 6, colors: ['#0d0820', '#2a1046', '#5a1030', '#000000'],
+    size: [5, 15], dist: [40, 120 + steps * 30], dur: [500, 950],
+    angle: Math.PI, spread: 1.0, round: true, gravity: 40
+  });
+}
+
+// ============================================================
+// СОСТОЯНИЕ ПАРТИИ
+// ============================================================
+let state = null;
+let deck = [];
+
+function shuffledDeck() {
+  const arr = QUESTIONS.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+// достаём задание; когда колода кончилась — тасуем заново (второй круг)
+function nextQuestion() {
+  if (!QUESTIONS.length) {
+    return { prompt: 'Список заданий пуст', answer: '—', hint: 'Добавь задания в массив QUESTIONS.' };
+  }
+  if (!deck.length) { deck = shuffledDeck(); }
+  return deck.pop();
+}
+
+// ============================================================
+// ОТРИСОВКА ДОРОЖКИ И КАМЕРА
+// ============================================================
+const tiles = [];
+(function buildTrack() {
+  for (let i = 0; i <= FINISH; i++) {
+    const t = document.createElement('div');
+    t.className = 'tile' + (i % 2 ? ' odd' : '') + (i === FINISH ? ' finish' : '');
+    t.textContent = i === FINISH ? '🏁' : String(i);
+    track.insertBefore(t, track.firstChild);
+    tiles.push(t);
+  }
+})();
+
+let tileSize = 64;
+let stepSize = 72;
+
+// размер плитки зависит от текущего отрыва: чем дальше монстр, тем сильнее «отъезжает» камера
+function layout() {
+  const vw = viewport.clientWidth;
+  const gap = state ? Math.max(2, state.hero - state.monster) : 4;
+  const need = gap + 3;                       // столько клеток держим в кадре
+  let t = Math.floor(vw / need) - 8;
+  t = Math.max(44, Math.min(96, t));
+  tileSize = t;
+  stepSize = t + 8;
+
+  document.documentElement.style.setProperty('--tile', tileSize + 'px');
+  document.documentElement.style.setProperty('--step', stepSize + 'px');
+
+  for (let i = 0; i < tiles.length; i++) {
+    tiles[i].style.left = (i * stepSize) + 'px';
+  }
+  placeTokens();
+  moveCamera();
+}
+
+function placeTokens() {
+  if (!state) { return; }
+  heroEl.style.transform    = 'translateX(' + (Math.min(state.hero, FINISH + 1) * stepSize) + 'px)';
+  monsterEl.style.transform = 'translateX(' + (state.monster * stepSize) + 'px)';
+}
+
+function moveCamera() {
+  if (!state) { return; }
+  const vw = viewport.clientWidth;
+  const trackW = (FINISH + 2) * stepSize;   // запас справа: заяц перелетает финиш и остаётся в кадре
+  const mid = (Math.min(state.hero, FINISH) + state.monster) / 2;
+  let x = mid * stepSize + tileSize / 2 - vw / 2;
+  const maxX = Math.max(0, trackW - vw);
+  if (x < 0) { x = 0; }
+  if (x > maxX) { x = maxX; }
+  track.style.transform = 'translateX(' + (-x) + 'px)';
+}
+
+// ============================================================
+// ПРИБОРЫ
+// ============================================================
+function plural(n, one, few, many) {
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) { return one; }
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) { return few; }
+  return many;
+}
+
+function updateHUD() {
+  const gap = Math.max(0, Math.min(state.hero, FINISH) - state.monster);
+  gapNum.textContent = String(gap);
+  gapWord.textContent = plural(gap, 'клетка', 'клетки', 'клеток');
+  turnNum.textContent = String(state.turn);
+  okNum.textContent = String(state.correct);
+
+  // уровень тревоги: 0 — спокойно, 3 — он дышит в спину
+  let d = 0;
+  if (gap <= 1) { d = 3; }
+  else if (gap === 2) { d = 2; }
+  else if (gap === 3) { d = 1; }
+  document.body.setAttribute('data-danger', String(d));
+}
+
+// ============================================================
+// ОВЕРЛЕИ И ТРЯСКА
+// ============================================================
+function shake(hard) {
+  if (reduced()) { return; }
+  const cls = hard ? 'screen-shake-hard' : 'screen-shake';
+  document.body.classList.remove('screen-shake', 'screen-shake-hard');
+  void document.body.offsetWidth;             // перезапуск анимации
+  document.body.classList.add(cls);
+  later(function () { document.body.classList.remove(cls); }, hard ? 560 : 520);
+}
+
+// большой оверлей — только на редких событиях, чтобы не приелся
+function bigShout(text, kind, ms) {
+  shoutText.textContent = text;
+  shout.className = 'show' + (kind ? ' ' + kind : '');
+  if (ms) { later(function () { shout.className = ''; }, ms); }
+}
+function hideShout() { shout.className = ''; }
+
+// маленькая реплика над дорожкой
+function whisper(text) {
+  const w = $('whisper');
+  w.textContent = text;
+  w.classList.remove('show');
+  void w.offsetWidth;
+  w.classList.add('show');
+  later(function () { w.classList.remove('show'); }, 1200);
+}
+
+// ============================================================
+// ХОД ИГРЫ
+// ============================================================
+function showQuestion() {
+  state.q = nextQuestion();
+  promptEl.textContent = state.q.prompt;
+  promptEl.classList.remove('swap');
+  void promptEl.offsetWidth;
+  promptEl.classList.add('swap');
+  answerBox.textContent = '';
+  answerBox.classList.remove('show');
+  btnReveal.disabled = false;
+  btnOk.disabled = false;
+  btnNo.disabled = false;
+  state.busy = false;
+}
+
+function revealAnswer() {
+  if (!state || !state.q) { return; }
+  answerBox.textContent = '→ ' + state.q.answer;
+  answerBox.classList.remove('show');
+  void answerBox.offsetWidth;
+  answerBox.classList.add('show');
+  btnReveal.disabled = true;
+  SFX.click();
+}
+
+function lockButtons() {
+  btnOk.disabled = true;
+  btnNo.disabled = true;
+  btnReveal.disabled = true;
+}
+
+// главный обработчик: учитель нажал ✅ или ❌
+function judge(isCorrect) {
+  if (!state || state.busy || state.over) { return; }
+  state.busy = true;                          // защита от двойного клика
+  lockButtons();
+  ensureAudio();
+
+  state.turn++;
+  state.lastQ = state.q;
+
+  if (isCorrect) {
+    // --- ЗАЯЦ ПРЫГАЕТ ---
+    state.correct++;
+    state.hero += HERO_STEP;
+    SFX.correct();
+    SFX.hop();
+    heroEl.classList.remove('stuck');
+    heroEl.classList.add('jump');
+    layout();
+    later(function () { heroEl.classList.remove('jump'); dust(); }, 500);
+    lastMiss.classList.remove('show');
+  } else {
+    // --- ЗАЯЦ СТОИТ ---
+    SFX.wrong();
+    heroEl.classList.remove('jump');
+    heroEl.classList.add('stuck');
+    later(function () { heroEl.classList.remove('stuck'); }, 460);
+    whisper('СТОИМ!');
+    // разбор ошибки остаётся на экране до конца следующего хода
+    lastMiss.innerHTML = '<b>Было:</b> ' + escapeHtml(state.q.prompt) +
+      ' → <b>' + escapeHtml(state.q.answer) + '</b><br>' + escapeHtml(state.q.hint);
+    lastMiss.classList.remove('show');
+    void lastMiss.offsetWidth;
+    lastMiss.classList.add('show');
+  }
+
+  const gapNow = Math.max(0, Math.min(state.hero, FINISH) - state.monster);
+  if (gapNow > state.maxGap) { state.maxGap = gapNow; }
+  updateHUD();
+
+  // заяц добежал — монстр уже не успевает
+  if (state.hero >= FINISH) {
+    later(escape_, 620);
+    return;
+  }
+
+  // ПАУЗА — успеваем выдохнуть, и только потом идёт монстр
+  later(function () { SFX.tension(); }, 180);
+  later(monsterMove, 560 + PAUSE_MS);
+}
+
+// --- ХОД МОНСТРА ---
+function monsterMove() {
+  if (!state || state.over) { return; }
+  const steps = MON_MIN + Math.floor(Math.random() * (MON_MAX - MON_MIN + 1));
+  state.monster += steps;
+
+  SFX.stomp(steps);
+  monsterEl.classList.remove('lurch');
+  void monsterEl.offsetWidth;
+  monsterEl.classList.add('lurch');
+  layout();
+  later(function () { monsterEl.classList.remove('lurch'); }, 460);
+  later(function () { monsterTrail(steps); }, 60);
+
+  if (steps === 3) { shake(false); }
+
+  // догнал?
+  if (state.monster >= Math.min(state.hero, FINISH)) {
+    later(eaten, 420);
+    return;
+  }
+
+  const gap = Math.min(state.hero, FINISH) - state.monster;
+  updateHUD();
+
+  // крупный оверлей — только когда совсем прижало, иначе приестся
+  if (gap <= 2) {
+    later(function () { bigShout(gap === 1 ? 'ОН РЯДОМ!' : 'ОН БЛИЗКО!', 'bad', 1100); }, 260);
+  } else if (steps === 3) {
+    later(function () { whisper('ОН БЛИЗКО!'); }, 220);
+  }
+
+  later(function () {
+    if (!state || state.over) { return; }
+    showQuestion();
+  }, gap <= 2 ? 1400 : 800);
+}
+
+// ============================================================
+// ФИНАЛЫ
+// ============================================================
+function eaten() {
+  if (!state || state.over) { return; }
+  state.over = true;
+  state.monster = Math.min(state.hero, FINISH);   // монстр наезжает на зайца
+  layout();
+  lockButtons();
+
+  SFX.eaten();
+  shake(true);
+  blackout.classList.add('on');
+  later(function () { blackout.classList.remove('on'); }, 300);
+
+  const c = centerOf(heroEl);
+  burst(c.x, c.y, {
+    count: 52, colors: ['#0d0820', '#000000', '#3b0d2a', '#FF4444', '#2a1046'],
+    size: [8, 26], dist: [90, 300], dur: [700, 1200], round: true, gravity: 60
+  });
+
+  later(function () { bigShout('АМ!', 'bad'); }, 180);
+  later(function () {
+    hideShout();
+    finish(false);
+  }, 1700);
+}
+
+function escape_() {
+  if (!state || state.over) { return; }
+  state.over = true;
+  lockButtons();
+  state.hero = FINISH + 1;                        // перелетает финиш
+  layout();
+
+  SFX.fanfare();
+  shake(false);
+
+  const c = centerOf(heroEl);
+  burst(c.x, c.y, {
+    count: 56, colors: ['#FFD93D', '#FF3D8B', '#4ECDC4', '#95E061', '#FF9F1C', '#FFDC5C'],
+    size: [8, 22], dist: [120, 330], dur: [700, 1300], gravity: 100
+  });
+  later(function () {
+    burst(window.innerWidth * 0.25, window.innerHeight * 0.35, {
+      count: 26, colors: ['#FFD93D', '#4ECDC4', '#FF3D8B'], size: [6, 16], dist: [80, 220], round: true
+    });
+    burst(window.innerWidth * 0.75, window.innerHeight * 0.3, {
+      count: 26, colors: ['#95E061', '#FFDC5C', '#FF9F1C'], size: [6, 16], dist: [80, 220], round: true
+    });
+  }, 380);
+
+  later(function () { bigShout('УШЁЛ!!!', 'good'); }, 150);
+  later(function () {
+    hideShout();
+    finish(true);
+  }, 1900);
+}
+
+function finish(win) {
+  document.body.setAttribute('data-danger', '0');
+  const gapEnd = Math.max(0, Math.min(state.hero, FINISH) - state.monster);
+
+  $('stTurns').textContent = String(state.turn);
+  $('stMax').textContent = String(state.maxGap);
+  $('stOk').textContent = String(state.correct);
+
+  const hintCard = $('endHint');
+  if (win) {
+    $('endTitle').textContent = '🏁 УШЁЛ!!!';
+    let tail;
+    if (gapEnd <= 2) { tail = 'На волосок! Ещё бы один шаг — и всё.'; }
+    else if (gapEnd <= 4) { tail = 'Монстр дышал в спину, но не достал.'; }
+    else { tail = 'Чистая работа — монстр остался далеко позади.'; }
+    $('endLead').innerHTML = 'Ты оторвался на <b>' + gapEnd + ' ' +
+      plural(gapEnd, 'клетку', 'клетки', 'клеток') + '</b>. ' + tail;
+    // на победе показываем правило последнего задания — закрепляем
+    const q = state.lastQ || state.q;
+    hintCard.innerHTML = q
+      ? '<span class="h">НА ПАМЯТЬ</span><span class="q">' + escapeHtml(q.prompt) +
+        ' → ' + escapeHtml(q.answer) + '</span><br>' + escapeHtml(q.hint)
+      : '';
+    hintCard.style.display = q ? 'block' : 'none';
+  } else {
+    $('endTitle').textContent = '👹 СЪЕДЕН';
+    $('endLead').textContent = 'Монстр догнал зайца на ' + state.turn + '-м ходу. Разбираем и бежим снова!';
+    const q = state.lastQ || state.q;
+    hintCard.innerHTML = q
+      ? '<span class="h">СПОТКНУЛИСЬ ЗДЕСЬ</span><span class="q">' + escapeHtml(q.prompt) +
+        ' → ' + escapeHtml(q.answer) + '</span><br>' + escapeHtml(q.hint)
+      : '';
+    hintCard.style.display = q ? 'block' : 'none';
+  }
+  endModal.classList.add('show');
+}
+
+// защита от подстановки разметки из банка заданий
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// СТАРТ / РЕСТАРТ — полный сброс всего
+// ============================================================
+function newGame() {
+  clearTimers();                                  // чистим все отложенные шаги старой партии
+  fxLayer.innerHTML = '';                         // и все висящие частицы
+  hideShout();
+  blackout.classList.remove('on');
+  document.body.classList.remove('screen-shake', 'screen-shake-hard');
+  endModal.classList.remove('show');
+  startModal.classList.remove('show');
+  lastMiss.classList.remove('show');
+  lastMiss.innerHTML = '';
+  heroEl.classList.remove('jump', 'stuck');
+  monsterEl.classList.remove('lurch');
+
+  deck = shuffledDeck();
+  state = {
+    hero: HERO_START,
+    monster: MONSTER_START,
+    turn: 0,
+    correct: 0,
+    maxGap: HERO_START - MONSTER_START,
+    q: null,
+    lastQ: null,
+    busy: false,
+    over: false
+  };
+
+  layout();
+  updateHUD();
+  showQuestion();
+}
+
+// ============================================================
+// СОБЫТИЯ
+// ============================================================
+btnOk.addEventListener('click', function () { judge(true); });
+btnNo.addEventListener('click', function () { judge(false); });
+btnReveal.addEventListener('click', function () { ensureAudio(); revealAnswer(); });
+$('btnStart').addEventListener('click', function () {
+  ensureAudio();                                  // первый жест — здесь и рождается звук
+  SFX.click();
+  newGame();
+});
+$('btnAgain').addEventListener('click', function () { SFX.click(); newGame(); });
+
+// клавиатура для проектора: ← ошибка, → верно
+document.addEventListener('keydown', function (e) {
+  if (startModal.classList.contains('show') || endModal.classList.contains('show')) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (startModal.classList.contains('show')) { $('btnStart').click(); }
+      else { $('btnAgain').click(); }
+    }
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === '1') { judge(true); }
+  if (e.key === 'ArrowLeft'  || e.key === '2') { judge(false); }
+  if (e.key === '0') { revealAnswer(); }
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', function () {
+  if (resizeTimer) { clearTimeout(resizeTimer); timers.delete(resizeTimer); }
+  resizeTimer = later(function () { layout(); }, 120);
+});
+
+// ============================================================
+// ПЕРВЫЙ КАДР: расставляем всё до старта, показываем правила
+// ============================================================
+state = {
+  hero: HERO_START, monster: MONSTER_START, turn: 0, correct: 0,
+  maxGap: HERO_START - MONSTER_START, q: null, lastQ: null, busy: true, over: false
+};
+layout();
+updateHUD();
+lockButtons();
+startModal.classList.add('show');
+</script>

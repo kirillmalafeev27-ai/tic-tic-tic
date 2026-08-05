@@ -1,0 +1,1677 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кот в мешке — немецкий</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   ПАЛИТРА И БАЗА (общая для всего набора игр)
+   ============================================================ */
+:root {
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+
+  --sack-1:#e0953f; --sack-2:#a75d22; --paper:#FFF6E3;
+  --head: 'Bangers', 'Impact', 'Haettenschweiler', system-ui, sans-serif;
+  --body: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--body);
+  color: #fff;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,61,139,.30), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(78,205,196,.26), transparent 46%),
+    radial-gradient(circle at 50% 96%, rgba(255,159,28,.24), transparent 52%),
+    linear-gradient(135deg, var(--bg), var(--bg-2));
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Полутоновая сетка поверх фона */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 14px 84px; /* снизу место, чтобы кнопка звука ничего не закрывала */
+}
+
+[hidden] { display: none !important; }
+
+/* ============================================================
+   ШАПКА: заголовок и табло
+   ============================================================ */
+h1 {
+  font-family: var(--head);
+  font-size: clamp(2.2rem, 9.4vw, 4.4rem);
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 4px 0 2px;
+  padding: 0 6px;
+  transform: rotate(-2deg);
+  background: linear-gradient(180deg, #fff2b0 0%, var(--gold) 42%, var(--orange) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(4px 4px 0 var(--ink));
+  line-height: 1;
+}
+
+.sub {
+  text-align: center;
+  font-size: clamp(.82rem, 3.4vw, 1rem);
+  color: #ffe9a8;
+  margin: 0 0 12px;
+  opacity: .92;
+}
+
+.hud {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.hud-box {
+  position: relative;
+  background: var(--bg-2);
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 6px 16px 8px;
+  min-width: 120px;
+  text-align: center;
+  transform: rotate(-1.2deg);
+}
+.hud-box:nth-child(2) { transform: rotate(1.4deg); }
+.hud-box span {
+  display: block;
+  font-size: .72rem;
+  letter-spacing: 2px;
+  color: #c9bdf5;
+  font-weight: 600;
+}
+.hud-box b {
+  font-family: var(--head);
+  font-size: clamp(1.8rem, 7vw, 2.4rem);
+  letter-spacing: 1px;
+  line-height: 1;
+  display: block;
+}
+#score-box b { color: var(--yellow); }
+#score-box.pop b { animation: pop .45s cubic-bezier(0.68,-0.55,0.265,1.55); }
+#score-box.bad b { color: var(--red); }
+@keyframes pop { 0%{transform:scale(1)} 45%{transform:scale(1.5) rotate(-6deg)} 100%{transform:scale(1)} }
+
+/* Всплывающая дельта очков */
+.delta {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translateX(-50%);
+  font-family: var(--head);
+  font-size: 2rem;
+  -webkit-text-stroke: 2px var(--ink);
+  pointer-events: none;
+  animation: delta-up 1.1s ease-out forwards;
+}
+@keyframes delta-up {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(.6); }
+  25% { opacity: 1; transform: translate(-50%, -14px) scale(1.25); }
+  100% { opacity: 0; transform: translate(-50%, -62px) scale(1); }
+}
+
+/* ============================================================
+   МЕШОК — главный герой
+   ============================================================ */
+.sack-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: min(58vw, 230px);
+  margin: 26px 0 6px;
+  transform-origin: 50% 0;
+  transition: transform .45s cubic-bezier(0.68,-0.55,0.265,1.55), margin-bottom .45s ease;
+}
+/* когда мешок опустел — он ужимается и не занимает полэкрана */
+.sack-stage.small { transform: scale(.56); margin-bottom: calc(min(58vw, 230px) * -0.42); }
+
+.sack-wrap {
+  position: relative;
+  width: min(56vw, 216px);
+  height: min(58vw, 226px);
+}
+
+/* Тело мешка дышит */
+.sack {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 92%;
+  animation: breathe 3s ease-in-out infinite;
+}
+.sack.jerk { animation: breathe 3s ease-in-out infinite, jerk .5s ease-in-out; }
+.sack.deflate { animation: none; transform: scale(1, .86) translateY(6px); transition: transform .5s ease; }
+
+@keyframes breathe {
+  0%,100% { transform: scale(1, 1); }
+  50%     { transform: scale(1.045, .975); }
+}
+@keyframes jerk {
+  0%   { transform: translate(0,0) rotate(0deg); }
+  15%  { transform: translate(-7px,-4px) rotate(-5deg) scale(1.05,.95); }
+  32%  { transform: translate(6px,2px) rotate(5deg) scale(.96,1.06); }
+  50%  { transform: translate(-5px,-2px) rotate(-3deg); }
+  68%  { transform: translate(4px,1px) rotate(2.5deg); }
+  85%  { transform: translate(-2px,0) rotate(-1deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
+}
+
+/* Мешковина */
+.sack-body {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 76%;
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.09) 0 3px, transparent 3px 8px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 3px, transparent 3px 8px),
+    radial-gradient(circle at 34% 26%, #f2b45f, transparent 55%),
+    linear-gradient(160deg, var(--sack-1), var(--sack-2) 78%);
+  border: 5px solid var(--ink);
+  border-radius: 44% 44% 46% 46% / 26% 26% 56% 56%;
+  box-shadow: 6px 6px 0 var(--ink), inset -12px -16px 0 rgba(0,0,0,.16);
+}
+
+/* Заплатка на мешке */
+.patch {
+  position: absolute;
+  left: 16%;
+  bottom: 22%;
+  width: 26%;
+  height: 24%;
+  background: #c8752c;
+  border: 4px dashed var(--ink);
+  border-radius: 6px;
+  transform: rotate(-11deg);
+}
+
+/* Горловина: две «створки», которые распахиваются */
+.neck {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  width: 46%;
+  height: 30%;
+  transform: translateX(-50%);
+}
+.hole {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 34%;
+  bottom: 0;
+  background: #0b0820;
+  border: 5px solid var(--ink);
+  border-radius: 50% 50% 30% 30% / 46% 46% 22% 22%;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.flap {
+  position: absolute;
+  bottom: -6%;
+  width: 59%;
+  height: 104%;
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.10) 0 3px, transparent 3px 8px),
+    linear-gradient(180deg, #f0ab55, var(--sack-2));
+  border: 5px solid var(--ink);
+  transition: transform .5s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.flap.l { left: -6%;  border-radius: 16px 4px 0 26px; transform-origin: 90% 100%; transform: rotate(-3deg); }
+.flap.r { right: -6%; border-radius: 4px 16px 26px 0; transform-origin: 10% 100%; transform: rotate(3deg); }
+
+.sack.open .flap.l { transform: rotate(-52deg) translate(-6px, 4px); }
+.sack.open .flap.r { transform: rotate(52deg)  translate(6px, 4px); }
+.sack.open .hole { opacity: 1; }
+
+/* Верёвка с узлом */
+.rope {
+  position: absolute;
+  left: 50%;
+  top: 27%;
+  width: 66%;
+  height: 15px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(90deg, var(--cyan) 0 7px, #2f9c94 7px 14px);
+  border: 4px solid var(--ink);
+  border-radius: 10px;
+  z-index: 4;
+  transition: transform .7s cubic-bezier(0.68,-0.55,0.265,1.55), opacity .7s ease;
+}
+.knot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  background: var(--cyan);
+  border: 4px solid var(--ink);
+  border-radius: 50% 50% 46% 46%;
+}
+.knot::before, .knot::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  width: 20px;
+  height: 8px;
+  background: var(--cyan);
+  border: 4px solid var(--ink);
+  border-radius: 6px;
+}
+.knot::before { left: -14px; transform: rotate(28deg); }
+.knot::after  { right: -14px; transform: rotate(-28deg); }
+.rope.fly { transform: translate(30px, -190px) rotate(115deg); opacity: 0; }
+
+/* Вопросительные знаки, торчащие из мешка */
+.qm {
+  position: absolute;
+  font-family: var(--head);
+  color: var(--yellow);
+  -webkit-text-stroke: 3px var(--ink);
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity .3s ease;
+}
+.qm.a { left: -4%;  top: 0%;   font-size: 2.1rem; animation: floaty 2.4s ease-in-out infinite; }
+.qm.b { right: -2%; top: 6%;   font-size: 1.6rem; color: var(--pink); animation: floaty 3.1s ease-in-out infinite .4s; }
+.qm.c { left: 36%;  top: -13%; font-size: 1.4rem; color: var(--cyan); animation: floaty 2.7s ease-in-out infinite .9s; }
+.sack-wrap.opened .qm { opacity: 0; }
+@keyframes floaty {
+  0%,100% { transform: translateY(0) rotate(-8deg); }
+  50%     { transform: translateY(-12px) rotate(10deg); }
+}
+
+/* Свет из мешка */
+.glow {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, var(--burst, var(--yellow)) 40%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.glow.blast { animation: blast .95s ease-out forwards; }
+@keyframes blast {
+  0%   { opacity: 0; transform: scale(.2); }
+  18%  { opacity: 1; transform: scale(3.6); }
+  100% { opacity: 0; transform: scale(7.5); }
+}
+.rays {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  background: repeating-conic-gradient(from 0deg, var(--burst, var(--yellow)) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.rays.blast { animation: rays-spin 1s ease-out forwards; }
+@keyframes rays-spin {
+  0%   { opacity: 0; transform: scale(.2) rotate(0deg); }
+  20%  { opacity: .85; transform: scale(1) rotate(30deg); }
+  100% { opacity: 0; transform: scale(1.7) rotate(80deg); }
+}
+
+.sack-caption {
+  text-align: center;
+  font-size: clamp(.9rem, 3.6vw, 1.05rem);
+  font-weight: 600;
+  color: #ffe9a8;
+  margin: 2px 0 12px;
+  min-height: 1.4em;
+}
+
+/* ============================================================
+   МОНЕТЫ-СТАВКИ
+   ============================================================ */
+.bets { text-align: center; }
+.bets-title {
+  font-family: var(--head);
+  font-size: clamp(1.3rem, 5.4vw, 1.9rem);
+  letter-spacing: 2px;
+  color: var(--yellow);
+  text-shadow: 3px 3px 0 var(--ink);
+  margin-bottom: 10px;
+}
+.coins {
+  display: flex;
+  gap: clamp(10px, 4vw, 22px);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.coin {
+  position: relative;
+  width: clamp(76px, 22vw, 100px);
+  height: clamp(76px, 22vw, 100px);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: 5px solid var(--ink);
+  background:
+    repeating-conic-gradient(from 0deg, rgba(0,0,0,.28) 0deg 4deg, rgba(255,255,255,.18) 4deg 8deg);
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  padding: 0;
+  transition: transform .12s ease, box-shadow .12s ease, filter .2s ease;
+  transform: rotate(-2deg);
+}
+.coin:nth-child(2) { transform: rotate(1.5deg); }
+.coin:nth-child(3) { transform: rotate(-1deg); }
+.coin::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,.3);
+  background: radial-gradient(circle at 34% 28%, #fff7c4, var(--coin-c, var(--gold)) 58%, #b8801a);
+}
+.coin span {
+  position: relative;
+  z-index: 2;
+  font-family: var(--head);
+  font-size: clamp(2.1rem, 8vw, 2.9rem);
+  color: var(--ink);
+  line-height: 1;
+  display: block;
+  padding-top: 6%;
+}
+.coin.c1 { --coin-c: #d9e6ef; }
+.coin.c3 { --coin-c: var(--gold); }
+.coin.c5 { --coin-c: #ff8fbe; }
+.coin:hover:not(:disabled) { transform: translate(-3px,-3px) rotate(-2deg); box-shadow: 9px 9px 0 var(--ink); }
+.coin:active:not(:disabled) { transform: translate(4px,4px) rotate(-2deg); box-shadow: 2px 2px 0 var(--ink); }
+.coin:disabled { cursor: default; filter: grayscale(.75) brightness(.75); }
+.coin.chosen { animation: coin-press .4s ease; filter: none !important; }
+@keyframes coin-press {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35) rotate(-14deg); }
+  100% { transform: scale(1); }
+}
+
+.mult-legend {
+  margin-top: 10px;
+  font-size: clamp(.78rem, 3.2vw, .95rem);
+  color: #cfc4ff;
+  font-weight: 500;
+}
+.mult-legend b { color: #fff; }
+
+/* ============================================================
+   СТОЛ И КАРТОЧКА С ЗАДАНИЕМ
+   ============================================================ */
+.table {
+  position: relative;
+  margin: 36px auto 0;
+  max-width: 560px;
+  min-height: 10px;
+}
+.table::before {
+  content: '';
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: -14px;
+  height: 16px;
+  background: rgba(0,0,0,.35);
+  border-radius: 50%;
+  filter: blur(4px);
+}
+
+.card {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  border: 5px solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 26px 18px 22px;
+  transform: rotate(-1.5deg);
+}
+.card.in { animation: card-in .62s cubic-bezier(0.68,-0.55,0.265,1.55); }
+.card.out { animation: card-out .38s ease-in forwards; }
+@keyframes card-in {
+  0%   { opacity: 0; transform: translateY(-180px) scale(.35) rotate(-24deg); }
+  60%  { opacity: 1; transform: translateY(16px) scale(1.08) rotate(3deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(-1.5deg); }
+}
+@keyframes card-out {
+  0%   { opacity: 1; transform: translateY(0) scale(1) rotate(-1.5deg); }
+  100% { opacity: 0; transform: translateY(80px) scale(.7) rotate(12deg); }
+}
+
+/* Загнутый уголок */
+.corner-fold {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 34px;
+  height: 34px;
+  background: #e6cb96;
+  border: 4px solid var(--ink);
+  border-radius: 4px 4px 14px 4px;
+  transform: rotate(45deg) translate(7px, 7px);
+  box-shadow: -3px -3px 0 rgba(0,0,0,.18);
+}
+
+.card-label {
+  font-size: .72rem;
+  letter-spacing: 2.5px;
+  font-weight: 700;
+  color: #7a6a45;
+  text-transform: uppercase;
+}
+.q-text {
+  font-family: var(--head);
+  font-size: clamp(1.8rem, 8vw, 3rem);
+  letter-spacing: 1.5px;
+  line-height: 1.1;
+  margin: 6px 0 2px;
+  color: var(--ink);
+  word-break: break-word;
+}
+.q-hint-inline {
+  font-size: clamp(.82rem, 3.3vw, .95rem);
+  color: #6b5c3c;
+  font-weight: 500;
+}
+.card.thinking { animation: think 0.5s ease-in-out infinite alternate; }
+@keyframes think {
+  from { transform: rotate(-1.5deg) scale(1); }
+  to   { transform: rotate(-1.5deg) scale(1.02); }
+}
+
+/* Штамп сложности */
+.stamp {
+  position: absolute;
+  right: 4px;
+  top: -26px;
+  font-family: var(--head);
+  font-size: clamp(1rem, 4.4vw, 1.45rem);
+  letter-spacing: 2px;
+  padding: 6px 14px 7px;
+  border: 5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: rotate(-13deg);
+  white-space: nowrap;
+  z-index: 5;
+}
+.stamp.easy { background: var(--green); color: var(--ink); }
+.stamp.mid  { background: var(--yellow); color: var(--ink); }
+.stamp.hard { background: var(--red); color: #fff; -webkit-text-stroke: 1.5px var(--ink); box-shadow: 5px 5px 0 var(--ink), 0 0 0 9px rgba(255,68,68,.28); }
+.stamp.slam { animation: slam .5s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes slam {
+  0%   { opacity: 0; transform: rotate(-40deg) scale(3.6); }
+  55%  { opacity: 1; transform: rotate(-9deg) scale(.86); }
+  75%  { transform: rotate(-16deg) scale(1.08); }
+  100% { opacity: 1; transform: rotate(-13deg) scale(1); }
+}
+
+/* ============================================================
+   ВАРИАНТЫ ОТВЕТА
+   ============================================================ */
+.options {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+@media (min-width: 520px) {
+  .options { grid-template-columns: 1fr 1fr; }
+}
+.opt {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: clamp(1.05rem, 4.4vw, 1.3rem);
+  color: var(--ink);
+  background: #fff;
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 14px 12px;
+  min-height: 56px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .2s ease;
+  transform: rotate(-.7deg);
+}
+.opt:nth-child(even) { transform: rotate(.8deg); }
+.opt:hover:not(:disabled) { transform: translate(-3px,-3px); box-shadow: 9px 9px 0 var(--ink); }
+.opt:active:not(:disabled) { transform: translate(4px,4px); box-shadow: 2px 2px 0 var(--ink); }
+.opt:disabled { cursor: default; }
+.opt.picked { background: var(--cyan); }
+.opt.right { background: var(--green); }
+.opt.wrong { background: var(--red); color: #fff; }
+.opt.faded { opacity: .45; }
+
+/* ============================================================
+   ИТОГ РАУНДА
+   ============================================================ */
+.result {
+  margin-top: 16px;
+  background: var(--bg-2);
+  border: 5px solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 16px 16px 18px;
+  transform: rotate(.8deg);
+  animation: card-in .5s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.result h3 {
+  font-family: var(--head);
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  letter-spacing: 2px;
+  margin: 0 0 4px;
+  -webkit-text-stroke: 1.5px var(--ink);
+}
+.result h3.good { color: var(--green); }
+.result h3.bad  { color: var(--red); }
+.result h3.dull { color: #b6accf; -webkit-text-stroke: 0; font-size: clamp(1.2rem, 5vw, 1.6rem); }
+.math {
+  font-family: var(--head);
+  font-size: clamp(1.2rem, 5.6vw, 1.8rem);
+  letter-spacing: 1.5px;
+  color: var(--yellow);
+  margin-bottom: 10px;
+}
+.hint-box {
+  background: rgba(255,255,255,.10);
+  border: 4px solid var(--ink);
+  border-left: 10px solid var(--yellow);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: clamp(.92rem, 3.7vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.hint-box.big {
+  font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+  font-weight: 700;
+  border-left-color: var(--red);
+  background: rgba(255,68,68,.18);
+  animation: hint-pulse .6s ease 2;
+}
+@keyframes hint-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+.hint-box b { color: var(--yellow); }
+
+.btn {
+  font-family: var(--head);
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  letter-spacing: 2px;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 10px 24px 12px;
+  min-height: 52px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  margin-top: 14px;
+}
+.btn:hover { transform: translate(-3px,-3px); box-shadow: 9px 9px 0 var(--ink); }
+.btn:active { transform: translate(4px,4px); box-shadow: 2px 2px 0 var(--ink); }
+.btn.cyan { background: var(--cyan); }
+.btn.pink { background: var(--pink); color: #fff; -webkit-text-stroke: 1.5px var(--ink); }
+
+/* ============================================================
+   КРУПНАЯ НАДПИСЬ И ЧАСТИЦЫ
+   ============================================================ */
+.bigword {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--head);
+  font-size: clamp(4rem, 16vw, 9rem);
+  line-height: .95;
+  letter-spacing: 3px;
+  -webkit-text-stroke: 3px var(--ink);
+  pointer-events: none;
+  z-index: 70;
+  opacity: 0;
+  padding: 0 3vw;
+  overflow-wrap: anywhere;
+}
+.bigword.show { animation: bigword 1.25s cubic-bezier(0.68,-0.55,0.265,1.55) forwards; }
+@keyframes bigword {
+  0%   { opacity: 0; transform: scale(.2) rotate(-16deg); }
+  22%  { opacity: 1; transform: scale(1.18) rotate(4deg); }
+  38%  { transform: scale(1) rotate(-3deg); }
+  80%  { opacity: 1; transform: scale(1) rotate(-3deg); }
+  100% { opacity: 0; transform: scale(1.15) rotate(-3deg); }
+}
+/* Скучный отклик — нарочно вялый и маленький */
+.bigword.meh {
+  font-size: clamp(1.4rem, 6vw, 2.4rem);
+  -webkit-text-stroke: 0;
+  color: #a99fc4;
+  letter-spacing: 1px;
+}
+.bigword.meh.show { animation: meh 1.1s ease forwards; }
+@keyframes meh {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  25%  { opacity: .95; transform: translateY(0); }
+  75%  { opacity: .95; }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+.particle {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 65;
+  animation: fly var(--dur, 1s) cubic-bezier(.15,.75,.35,1) forwards;
+}
+@keyframes fly {
+  0%   { opacity: 1; transform: translate(-50%,-50%) rotate(0deg) scale(1.1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot,360deg)) scale(.3); }
+}
+
+/* Тряска экрана */
+.screen-shake { animation: shake .5s ease-in-out; }
+@keyframes shake {
+  0%,100% { transform: translate(0,0) rotate(0); }
+  10% { transform: translate(-9px,5px) rotate(-1deg); }
+  25% { transform: translate(8px,-6px) rotate(1.2deg); }
+  40% { transform: translate(-7px,4px) rotate(-.8deg); }
+  55% { transform: translate(6px,-3px) rotate(.8deg); }
+  70% { transform: translate(-4px,2px) rotate(-.5deg); }
+  85% { transform: translate(3px,-1px) rotate(.3deg); }
+}
+
+/* ============================================================
+   ЗВУК И ФИНАЛЬНОЕ ОКНО
+   ============================================================ */
+.sound-btn {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 80;
+  width: 50px;
+  height: 50px;
+  font-size: 1.35rem;
+  background: var(--cyan);
+  border: 5px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  padding: 0;
+}
+.sound-btn:hover { transform: translate(-3px,-3px); box-shadow: 7px 7px 0 var(--ink); }
+.sound-btn:active { transform: translate(3px,3px); box-shadow: 1px 1px 0 var(--ink); }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(10,6,30,.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-2);
+  border: 5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 22px 18px 26px;
+  text-align: center;
+  transform: rotate(-1.2deg);
+  animation: card-in .6s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.modal-card h2 {
+  font-family: var(--head);
+  font-size: clamp(2.2rem, 10vw, 3.4rem);
+  letter-spacing: 2px;
+  margin: 0 0 6px;
+  -webkit-text-stroke: 2px var(--ink);
+  line-height: 1;
+}
+.modal-card h2.win { color: var(--gold); }
+.modal-card h2.lose { color: var(--red); }
+.modal-sub { font-weight: 600; color: #ffe9a8; margin-bottom: 14px; font-size: clamp(.95rem,3.8vw,1.1rem); }
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255,255,255,.09);
+  border: 4px solid var(--ink);
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: clamp(.88rem, 3.6vw, 1.02rem);
+  text-align: left;
+}
+.stat-row b { font-family: var(--head); font-size: 1.4rem; letter-spacing: 1px; color: var(--yellow); }
+.stat-row b.red { color: var(--red); }
+
+/* ============================================================
+   БЕРЕЖНЫЙ РЕЖИМ ДВИЖЕНИЯ
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .sack, .sack.jerk { animation: none !important; }
+  .qm { animation: none !important; }
+  .screen-shake { animation: none !important; }
+  .card.in, .result, .modal-card { animation: none !important; }
+  .stamp.slam { animation: stamp-fade .3s ease forwards; }
+  @keyframes stamp-fade { from { opacity: 0; } to { opacity: 1; } }
+  .glow.blast, .rays.blast { animation: soft-blast .5s ease-out forwards; }
+  @keyframes soft-blast { 0%{opacity:0} 40%{opacity:.8} 100%{opacity:0} }
+  .bigword.show { animation: soft-word 1.1s ease forwards; }
+  @keyframes soft-word { 0%{opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+  .sack-stage, .flap, .rope { transition-duration: .25s; }
+}
+</style>
+
+<button class="sound-btn" id="soundBtn" aria-label="Звук">🔊</button>
+
+<div class="wrap">
+  <h1>Кот в мешке</h1>
+  <p class="sub">Ставь ВСЛЕПУЮ. Что в мешке — узнаешь потом.</p>
+
+  <div class="hud">
+    <div class="hud-box" id="score-box"><span>ОЧКИ</span><b id="scoreVal">20</b></div>
+    <div class="hud-box"><span>РАУНД</span><b id="roundVal">1/8</b></div>
+  </div>
+
+  <!-- ===== МЕШОК ===== -->
+  <div class="sack-stage" id="sackStage">
+    <div class="sack-wrap" id="sackWrap">
+      <div class="rays" id="rays"></div>
+      <div class="glow" id="glow"></div>
+      <div class="qm a">?</div>
+      <div class="qm b">?</div>
+      <div class="qm c">?</div>
+      <div class="sack" id="sack">
+        <div class="sack-body"><div class="patch"></div></div>
+        <div class="neck">
+          <div class="hole"></div>
+          <div class="flap l"></div>
+          <div class="flap r"></div>
+        </div>
+        <div class="rope" id="rope"><div class="knot"></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="sack-caption" id="caption">Мешок шевелится. Внутри что-то есть...</p>
+
+  <!-- ===== СТАВКИ ===== -->
+  <div class="bets" id="bets">
+    <div class="bets-title">СКОЛЬКО СТАВИШЬ?</div>
+    <div class="coins">
+      <button class="coin c1" data-bet="1"><span>1</span></button>
+      <button class="coin c3" data-bet="3"><span>3</span></button>
+      <button class="coin c5" data-bet="5"><span>5</span></button>
+    </div>
+    <div class="mult-legend">🍬 лёгкое <b>×1</b> · 😐 среднее <b>×2</b> · 👹 зверское <b>×3</b></div>
+  </div>
+
+  <!-- ===== СТОЛ С ЗАДАНИЕМ ===== -->
+  <div class="table" id="table" hidden>
+    <div class="card" id="card">
+      <div class="stamp" id="stamp" hidden></div>
+      <div class="corner-fold"></div>
+      <div class="card-label" id="cardLabel">ЗАДАНИЕ</div>
+      <div class="q-text" id="qText"></div>
+      <div class="q-hint-inline">Выбери правильную форму глагола</div>
+      <div class="options" id="options"></div>
+    </div>
+    <div id="resultSlot"></div>
+  </div>
+</div>
+
+<div class="bigword" id="bigword"></div>
+<div class="modal" id="modal" hidden><div class="modal-card" id="modalCard"></div></div>
+
+<script>
+// ⬇️ ЗАМЕНИ ЭТОТ СПИСОК, ЧТОБЫ ИГРАТЬ В ЛЮБУЮ ДРУГУЮ ТЕМУ.
+// Формат: prompt — что показываем, answer — правильный ответ, hint — объяснение правила.
+const QUESTIONS = [
+  {prompt: "ich + machen (делать)",      answer: "ich mache",   hint: "После ich → окончание -e. Основа mach- + e = mache"},
+  {prompt: "du + spielen (играть)",      answer: "du spielst",  hint: "После du → окончание -st. Основа spiel- + st = spielst"},
+  {prompt: "er + lernen (учить)",        answer: "er lernt",    hint: "После er/sie/es → окончание -t. Основа lern- + t = lernt"},
+  {prompt: "sie + malen (рисовать)",     answer: "sie malt",    hint: "После sie (она) → окончание -t. Основа mal- + t = malt"},
+  {prompt: "es + kommen (приходить)",    answer: "es kommt",    hint: "После es → окончание -t. Основа komm- + t = kommt"},
+  {prompt: "wir + wohnen (жить)",        answer: "wir wohnen",  hint: "После wir → окончание -en, как инфинитив. wohn- + en = wohnen"},
+  {prompt: "ihr + singen (петь)",        answer: "ihr singt",   hint: "После ihr → окончание -t. Основа sing- + t = singt"},
+  {prompt: "sie + trinken (пить)",       answer: "sie trinken", hint: "После sie (они) → окончание -en. Основа trink- + en = trinken"},
+  {prompt: "du + heißen (зваться)",      answer: "du heißt",    hint: "⚠️ ХИТРО! Основа уже кончается на ß (heiß-), поэтому только -t, а не -st. du heißt, НЕ du heißst"},
+  {prompt: "ihr + tanzen (танцевать)",   answer: "ihr tanzt",   hint: "Основа tanz- + t = tanzt. Произносим «танцт»"},
+  {prompt: "ich + sein (быть)",          answer: "ich bin",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ глагол! Учим наизусть: ich BIN"},
+  {prompt: "du + sein (быть)",           answer: "du bist",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: du BIST"},
+  {prompt: "er + sein (быть)",           answer: "er ist",      hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: er/sie/es IST"},
+  {prompt: "wir + sein (быть)",          answer: "wir sind",    hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! wir SIND"},
+  {prompt: "ich + haben (иметь)",        answer: "ich habe",    hint: "В форме ich окончание обычное: hab- + e = habe"},
+  {prompt: "du + haben (иметь)",         answer: "du hast",     hint: "🌟 haben — НЕПРАВИЛЬНЫЙ в du и er! Буква -b- ПРОПАДАЕТ: du HAST (не habst)"},
+  {prompt: "er + haben (иметь)",         answer: "er hat",      hint: "🌟 haben — НЕПРАВИЛЬНЫЙ! Буква -b- ПРОПАДАЕТ: er HAT (не habt)"},
+  {prompt: "ihr + haben (иметь)",        answer: "ihr habt",    hint: "У ihr всё честно: hab- + t = habt"},
+  {prompt: "du + arbeiten (работать)",   answer: "du arbeitest",hint: "⚠️ Основа кончается на -t (arbeit-), между основой и окончанием вставляем -e-: arbeit-e-st"},
+  {prompt: "er + finden (находить)",     answer: "er findet",   hint: "⚠️ Основа кончается на -d (find-), вставляем -e-: find-e-t = findet"},
+  {prompt: "wir + gehen (идти)",         answer: "wir gehen",   hint: "После wir → -en. geh- + en = gehen"},
+  {prompt: "ihr + lesen (читать)",       answer: "ihr lest",    hint: "Основа кончается на -s (les-), поэтому только -t: lest"},
+  {prompt: "du + fahren (ехать)",        answer: "du fährst",   hint: "🌟 Корневая гласная меняется: a → ä. du FÄHRST"},
+  {prompt: "er + sprechen (говорить)",   answer: "er spricht",  hint: "🌟 Корневая гласная меняется: e → i. er SPRICHT"}
+];
+
+(function () {
+  'use strict';
+
+  /* ==========================================================
+     1. НАСТРОЙКИ ПАРТИИ
+     ========================================================== */
+  const START_SCORE = 20;   // стартовые очки
+  const ROUNDS = 8;         // сколько раундов в партии
+  const WIN_SCORE = 60;     // досрочная победа
+
+  /* ==========================================================
+     2. СЛОЖНОСТЬ ЗАДАНИЯ — эвристика прямо по банку
+     🌟 или ⚠️ в подсказке → зверское;
+     wir/ihr с обычными окончаниями → лёгкое; остальное → среднее
+     ========================================================== */
+  function difficulty(q) {
+    const hint = (q && q.hint) ? String(q.hint) : '';
+    if (hint.indexOf('🌟') !== -1 || hint.indexOf('⚠️') !== -1) return 'hard';
+    const prompt = (q && q.prompt) ? String(q.prompt).toLowerCase() : '';
+    if (/(^|\s)(wir|ihr)(\s|\+)/.test(prompt)) return 'easy';
+    return 'mid';
+  }
+
+  const DIFF = {
+    easy: { name: 'ЛЁГКОЕ',   emo: '🍬', mult: 1, color: '#95E061' },
+    mid:  { name: 'СРЕДНЕЕ',  emo: '😐', mult: 2, color: '#FFD93D' },
+    hard: { name: 'ЗВЕРСКОЕ', emo: '👹', mult: 3, color: '#FF4444' }
+  };
+
+  /* ==========================================================
+     3. ЗВУК: Web Audio, контекст создаётся лениво
+     ========================================================== */
+  let audioCtx = null;
+  let soundOn = true;
+  let gestured = false; // контекст рождается только после первого жеста
+  try { soundOn = localStorage.getItem('kvm-sound') !== 'off'; } catch (e) { soundOn = true; }
+
+  function markGesture() { if (!gestured) { gestured = true; ac(); } }
+  ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+    window.addEventListener(ev, markGesture, { passive: true });
+  });
+
+  function ac() {
+    if (!soundOn || !gestured) return null;
+    try {
+      if (!audioCtx) {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        audioCtx = new Ctor();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    } catch (e) { return null; }
+  }
+
+  // Одиночный тон (с необязательным «съездом» частоты)
+  function tone(freq, delay, dur, type, vol, glideTo) {
+    const c = ac(); if (!c) return;
+    try {
+      const t0 = c.currentTime + (delay || 0);
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (glideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(30, glideTo), t0 + dur);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.16, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain); gain.connect(c.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.06);
+    } catch (e) { /* звук не критичен */ }
+  }
+
+  // Шумовой удар (шлепок штампа, шорох верёвки)
+  function noiseHit(delay, dur, vol, cutoff) {
+    const c = ac(); if (!c) return;
+    try {
+      const len = Math.max(1, Math.floor(c.sampleRate * dur));
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = c.createBufferSource(); src.buffer = buf;
+      const filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = cutoff || 1400;
+      const gain = c.createGain(); gain.gain.value = vol || 0.22;
+      src.connect(filt); filt.connect(gain); gain.connect(c.destination);
+      src.start(c.currentTime + (delay || 0));
+    } catch (e) { /* тишина — не беда */ }
+  }
+
+  const sfx = {
+    click:   function () { tone(520, 0, 0.09, 'triangle', 0.13); },
+    coin:    function () { tone(880, 0, 0.07, 'square', 0.1); tone(1320, 0.06, 0.12, 'square', 0.09); },
+    untie:   function () { noiseHit(0, 0.45, 0.16, 2600); tone(300, 0, 0.4, 'sawtooth', 0.07, 900); },
+    thud:    function () { tone(110, 0, 0.18, 'square', 0.28, 55); noiseHit(0, 0.16, 0.3, 900); },
+    growl:   function () { tone(58, 0, 0.85, 'sawtooth', 0.24, 38); tone(87, 0.02, 0.8, 'square', 0.1, 46); },
+    sparkle: function () { tone(1200, 0, 0.1, 'sine', 0.09); tone(1600, 0.07, 0.12, 'sine', 0.08); },
+    good:    function () { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, i * 0.085, 0.28, 'triangle', 0.17); }); },
+    bad:     function () { [330, 262, 196, 147].forEach(function (f, i) { tone(f, i * 0.1, 0.34, 'sawtooth', 0.15); }); },
+    meh:     function () { tone(233, 0, 0.22, 'sine', 0.1); tone(220, 0.16, 0.3, 'sine', 0.07); },
+    fanfare: function () {
+      [523, 659, 784, 1046, 1318].forEach(function (f, i) { tone(f, i * 0.11, 0.4, 'square', 0.14); });
+      tone(1568, 0.58, 0.7, 'triangle', 0.16);
+    },
+    sad:     function () { [392, 349, 294, 233, 175].forEach(function (f, i) { tone(f, i * 0.16, 0.5, 'sawtooth', 0.14); }); }
+  };
+
+  /* ==========================================================
+     4. ТАЙМЕРЫ — все под учётом, чтобы рестарт чистил всё
+     ========================================================== */
+  const timers = new Set();
+  function later(fn, ms) {
+    const id = setTimeout(function () { timers.delete(id); try { fn(); } catch (e) { /* пропускаем */ } }, ms);
+    timers.add(id);
+    return id;
+  }
+  function clearAllTimers() {
+    timers.forEach(function (id) { clearTimeout(id); });
+    timers.clear();
+  }
+
+  function reduced() {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+  }
+
+  /* ==========================================================
+     5. ССЫЛКИ НА DOM
+     ========================================================== */
+  const el = {
+    scoreVal: document.getElementById('scoreVal'),
+    scoreBox: document.getElementById('score-box'),
+    roundVal: document.getElementById('roundVal'),
+    sackStage: document.getElementById('sackStage'),
+    sackWrap: document.getElementById('sackWrap'),
+    sack: document.getElementById('sack'),
+    rope: document.getElementById('rope'),
+    glow: document.getElementById('glow'),
+    rays: document.getElementById('rays'),
+    caption: document.getElementById('caption'),
+    bets: document.getElementById('bets'),
+    table: document.getElementById('table'),
+    card: document.getElementById('card'),
+    stamp: document.getElementById('stamp'),
+    qText: document.getElementById('qText'),
+    options: document.getElementById('options'),
+    resultSlot: document.getElementById('resultSlot'),
+    bigword: document.getElementById('bigword'),
+    modal: document.getElementById('modal'),
+    modalCard: document.getElementById('modalCard'),
+    soundBtn: document.getElementById('soundBtn')
+  };
+  const coinBtns = Array.prototype.slice.call(document.querySelectorAll('.coin'));
+
+  /* ==========================================================
+     6. СОСТОЯНИЕ ПАРТИИ
+     ========================================================== */
+  const state = {
+    score: START_SCORE,
+    round: 0,
+    phase: 'idle',   // idle → opening → answer → result → over
+    busy: false,     // защита от двойного клика
+    bet: 0,
+    queue: [],
+    lastQ: null,
+    current: null,
+    diff: 'mid',
+    stats: { hard: 0, hardSurvived: 0, worst: 0, right: 0, played: 0 }
+  };
+
+  /* ==========================================================
+     7. ОЧЕРЕДЬ ЗАДАНИЙ — переживает и 8, и 40 вопросов,
+     при нехватке идёт на второй круг с новым перемешиванием
+     ========================================================== */
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function refill() {
+    state.queue = shuffle(QUESTIONS.slice());
+    // не начинать новый круг тем же заданием, что было только что
+    if (state.queue.length > 1 && state.queue[0] === state.lastQ) {
+      const t = state.queue[0]; state.queue[0] = state.queue[1]; state.queue[1] = t;
+    }
+  }
+
+  function nextQuestion() {
+    if (!QUESTIONS.length) return null;
+    if (!state.queue.length) refill();
+    const q = state.queue.shift();
+    state.lastQ = q;
+    return q;
+  }
+
+  /* ==========================================================
+     8. ВАРИАНТЫ ОТВЕТА: ловушки строим из настоящих ошибок
+     ========================================================== */
+  const FORMS = {
+    'sein':     ['bin', 'bist', 'ist', 'sind', 'seid'],
+    'haben':    ['habe', 'hast', 'hat', 'habt', 'haben', 'habst'],
+    'fahren':   ['fahre', 'fährst', 'fährt', 'fahrt', 'fahren', 'fahrst'],
+    'sprechen': ['spreche', 'sprichst', 'spricht', 'sprecht', 'sprechen', 'sprechst'],
+    'lesen':    ['lese', 'liest', 'lest', 'lesen', 'lesst'],
+    'heißen':   ['heiße', 'heißt', 'heißen', 'heißst'],
+    'arbeiten': ['arbeite', 'arbeitest', 'arbeitet', 'arbeiten', 'arbeitst'],
+    'finden':   ['finde', 'findest', 'findet', 'finden', 'findt']
+  };
+
+  function stemOf(inf) {
+    if (inf.length > 2 && inf.slice(-2) === 'en') return inf.slice(0, -2);
+    if (inf.length > 1 && inf.slice(-1) === 'n') return inf.slice(0, -1);
+    return inf;
+  }
+
+  function regularForms(inf) {
+    const s = stemOf(inf);
+    if (!s) return [];
+    return [s + 'e', s + 'st', s + 't', s + 'en'];
+  }
+
+  function infinitiveOf(q) {
+    const parts = String(q.prompt || '').split('+');
+    if (parts.length < 2) return '';
+    return parts[1].trim().split(/[\s(]/)[0].replace(/[.,;:!?]/g, '');
+  }
+
+  function makeOptions(q) {
+    const words = String(q.answer).trim().split(/\s+/);
+    const pron = words.length > 1 ? words[0] : '';
+    const correctForm = words.length > 1 ? words.slice(1).join(' ') : String(q.answer);
+    const inf = infinitiveOf(q);
+
+    // для «капризных» глаголов берём их настоящие формы,
+    // для остальных — обычные окончания; при нехватке добираем правилом
+    function clean(list) {
+      const seen = {};
+      return list.filter(function (f) {
+        if (!f || f === correctForm || seen[f]) return false;
+        seen[f] = true;
+        return true;
+      });
+    }
+    let pool = clean(inf && FORMS[inf] ? FORMS[inf].slice() : regularForms(inf));
+    if (pool.length < 3 && inf) pool = clean(pool.concat(regularForms(inf)));
+    shuffle(pool);
+
+    let opts = pool.slice(0, 3).map(function (f) { return pron ? pron + ' ' + f : f; });
+
+    // страховка: если ловушек не хватило, берём ответы других заданий
+    if (opts.length < 2) {
+      const spare = shuffle(QUESTIONS.slice()).filter(function (other) {
+        return other.answer !== q.answer && opts.indexOf(other.answer) === -1;
+      });
+      for (let i = 0; i < spare.length && opts.length < 3; i++) opts.push(spare[i].answer);
+    }
+
+    opts.push(q.answer);
+    return shuffle(opts);
+  }
+
+  /* ==========================================================
+     9. ЧАСТИЦЫ, ТРЯСКА, КРУПНАЯ НАДПИСЬ
+     ========================================================== */
+  const PAL = ['#FFD93D', '#FF3D8B', '#4ECDC4', '#95E061', '#FF9F1C', '#FFDC5C'];
+
+  function burst(x, y, count, colors) {
+    if (reduced()) return;
+    const pal = colors && colors.length ? colors : PAL;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+      const dist = 90 + Math.random() * 240;
+      const size = 8 + Math.random() * 14;
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.background = pal[Math.floor(Math.random() * pal.length)];
+      p.style.borderRadius = Math.random() < 0.4 ? '50%' : '4px';
+      p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+      p.style.setProperty('--dy', Math.sin(ang) * dist + 120 + 'px');
+      p.style.setProperty('--rot', Math.round((Math.random() - 0.5) * 900) + 'deg');
+      const dur = 0.8 + Math.random() * 0.7;
+      p.style.setProperty('--dur', dur + 's');
+      document.body.appendChild(p);
+      // подчищаем DOM: и по событию, и по таймеру
+      p.addEventListener('animationend', function () { if (p.parentNode) p.parentNode.removeChild(p); });
+      later(function () { if (p.parentNode) p.parentNode.removeChild(p); }, Math.round(dur * 1000) + 400);
+    }
+  }
+
+  function burstFrom(node, count, colors) {
+    if (!node) return;
+    let r;
+    try { r = node.getBoundingClientRect(); } catch (e) { return; }
+    burst(r.left + r.width / 2, r.top + r.height / 2, count, colors);
+  }
+
+  function shakeScreen() {
+    if (reduced()) return;
+    document.body.classList.remove('screen-shake');
+    void document.body.offsetWidth;
+    document.body.classList.add('screen-shake');
+    later(function () { document.body.classList.remove('screen-shake'); }, 560);
+  }
+
+  function bigWord(text, color, meh) {
+    el.bigword.textContent = text;
+    el.bigword.style.color = color || '#FFD93D';
+    // длинные надписи ужимаем, чтобы даже без Bangers ничего не выехало за экран
+    if (meh) {
+      el.bigword.style.fontSize = '';
+    } else {
+      const vw = Math.max(7, Math.min(16, Math.round(125 / Math.max(1, text.length))));
+      el.bigword.style.fontSize = 'clamp(2.2rem, ' + vw + 'vw, 9rem)';
+    }
+    el.bigword.className = 'bigword' + (meh ? ' meh' : '');
+    void el.bigword.offsetWidth;
+    el.bigword.classList.add('show');
+    later(function () { el.bigword.classList.remove('show'); }, 1400);
+  }
+
+  /* ==========================================================
+     10. HUD
+     ========================================================== */
+  function renderHud() {
+    el.scoreVal.textContent = String(state.score);
+    el.roundVal.textContent = Math.min(state.round + 1, ROUNDS) + '/' + ROUNDS;
+    el.scoreBox.classList.toggle('bad', state.score < 8);
+  }
+
+  function bumpScore(delta) {
+    state.score += delta;
+    renderHud();
+    el.scoreBox.classList.remove('pop');
+    void el.scoreBox.offsetWidth;
+    el.scoreBox.classList.add('pop');
+    const d = document.createElement('div');
+    d.className = 'delta';
+    d.textContent = (delta > 0 ? '+' : '') + delta;
+    d.style.color = delta > 0 ? '#95E061' : '#FF4444';
+    el.scoreBox.appendChild(d);
+    later(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 1200);
+  }
+
+  /* ==========================================================
+     11. ЖИЗНЬ МЕШКА: дыхание + внезапные дёрганья
+     ========================================================== */
+  let jerkOn = false;
+
+  function scheduleJerk() {
+    if (!jerkOn) return;
+    const wait = 2000 + Math.random() * 3000; // случайный интервал 2–5 секунд
+    later(function () {
+      if (!jerkOn) return;
+      el.sack.classList.add('jerk');
+      if (!reduced()) { tone(150 + Math.random() * 60, 0, 0.09, 'square', 0.05); }
+      later(function () { el.sack.classList.remove('jerk'); }, 520);
+      scheduleJerk();
+    }, wait);
+  }
+
+  function startJerks() { if (!jerkOn) { jerkOn = true; scheduleJerk(); } }
+  function stopJerks() { jerkOn = false; el.sack.classList.remove('jerk'); }
+
+  /* ==========================================================
+     12. РАУНД: подготовка
+     ========================================================== */
+  function startRound() {
+    // условия конца партии проверяем до раздачи
+    if (state.score < 0) { endGame('lose'); return; }
+    if (state.score >= WIN_SCORE) { endGame('win'); return; }
+    if (state.round >= ROUNDS) { endGame('done'); return; }
+
+    state.phase = 'idle';
+    state.busy = false;
+    state.bet = 0;
+    state.current = null;
+
+    // мешок снова завязан и целёхонек
+    el.sack.classList.remove('open', 'deflate');
+    el.sackWrap.classList.remove('opened');
+    el.sackStage.classList.remove('small');
+    el.rope.classList.remove('fly');
+    el.glow.classList.remove('blast');
+    el.rays.classList.remove('blast');
+
+    el.table.hidden = true;
+    el.card.classList.remove('in', 'out', 'thinking');
+    el.stamp.hidden = true;
+    el.stamp.className = 'stamp';
+    el.options.innerHTML = '';
+    el.resultSlot.innerHTML = '';
+
+    el.bets.hidden = false;
+    coinBtns.forEach(function (b) { b.disabled = false; b.classList.remove('chosen'); });
+
+    el.caption.textContent = 'Мешок шевелится. Внутри что-то есть...';
+    renderHud();
+    startJerks();
+  }
+
+  /* ==========================================================
+     13. СТАВКА ВСЛЕПУЮ → РАСКРЫТИЕ МЕШКА (главный момент)
+     ========================================================== */
+  function placeBet(amount, btn) {
+    if (state.busy || state.phase !== 'idle') return;
+    state.busy = true;
+    state.phase = 'opening';
+    state.bet = amount;
+
+    sfx.coin();
+    btn.classList.add('chosen');
+    coinBtns.forEach(function (b) { b.disabled = true; });
+
+    const q = nextQuestion();
+    if (!q) { state.busy = false; return; }
+    state.current = q;
+    state.diff = difficulty(q);
+    const info = DIFF[state.diff];
+
+    el.caption.textContent = 'Поставил ' + amount + '. Развязываем...';
+    stopJerks();
+
+    // 1) верёвка улетает
+    later(function () {
+      sfx.untie();
+      el.rope.classList.add('fly');
+      el.sackWrap.classList.add('opened');
+    }, 200);
+
+    // 2) створки распахиваются, изнутри бьёт свет цвета сложности
+    later(function () {
+      el.sack.classList.add('open');
+      el.sackWrap.style.setProperty('--burst', info.color);
+      el.glow.classList.add('blast');
+      el.rays.classList.add('blast');
+      sfx.sparkle();
+      burstFrom(el.sackWrap, state.diff === 'hard' ? 26 : 16, [info.color, '#ffffff', '#FFD93D']);
+    }, 620);
+
+    // 3) задание вылетает и падает на стол
+    later(function () {
+      el.sack.classList.add('deflate');
+      el.sackStage.classList.add('small');
+      el.bets.hidden = true;
+      el.qText.textContent = q.prompt;
+      el.table.hidden = false;
+      el.card.classList.remove('out');
+      el.card.classList.add('in');
+      el.caption.textContent = 'Мешок пуст. Оттуда вылезло вот это:';
+    }, 780);
+
+    // 4) штамп сложности шлёпается сверху
+    later(function () {
+      el.stamp.hidden = false;
+      el.stamp.className = 'stamp ' + state.diff + ' slam';
+      el.stamp.textContent = info.emo + ' ' + info.name + ' ×' + info.mult;
+      sfx.thud();
+      if (state.diff === 'hard') {
+        state.stats.hard++;
+        sfx.growl();
+        shakeScreen();
+        bigWord('👹 ЗВЕРСКОЕ!', '#FF4444');
+        burstFrom(el.stamp, 30, ['#FF4444', '#FF9F1C', '#14102b']);
+        el.caption.textContent = 'Ставка ' + state.bet + ' × 3 = ' + (state.bet * 3) + '. Ой.';
+      } else if (state.diff === 'mid') {
+        el.caption.textContent = 'Ставка ' + state.bet + ' × 2 = ' + (state.bet * 2) + '.';
+      } else {
+        el.caption.textContent = 'Ставка ' + state.bet + ' × 1 = ' + state.bet + '. Повезло.';
+      }
+    }, 1240);
+
+    // 5) появляются варианты ответа
+    later(function () {
+      showOptions(q);
+      state.phase = 'answer';
+      state.busy = false;
+    }, state.diff === 'hard' ? 1900 : 1650);
+  }
+
+  /* ==========================================================
+     14. ОТВЕТ И ИСХОД
+     ========================================================== */
+  function showOptions(q) {
+    el.options.innerHTML = '';
+    const opts = makeOptions(q);
+    opts.forEach(function (text) {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.type = 'button';
+      b.textContent = text;
+      b.addEventListener('click', function () { answer(b, text, opts); });
+      el.options.appendChild(b);
+    });
+  }
+
+  function answer(btn, text, opts) {
+    if (state.busy || state.phase !== 'answer') return;
+    state.busy = true;
+    state.phase = 'checking';
+
+    sfx.click();
+    const all = Array.prototype.slice.call(el.options.querySelectorAll('.opt'));
+    all.forEach(function (b) { b.disabled = true; if (b !== btn) b.classList.add('faded'); });
+    btn.classList.add('picked');
+    el.card.classList.add('thinking');
+    el.caption.textContent = 'Проверяем...';
+
+    // обязательная секунда ожидания: ответ раньше исхода
+    later(function () { reveal(btn, text, all); }, 900);
+  }
+
+  function reveal(btn, text, all) {
+    el.card.classList.remove('thinking');
+    const q = state.current;
+    const info = DIFF[state.diff];
+    const correct = (text === q.answer);
+    const delta = (correct ? 1 : -1) * state.bet * info.mult;
+
+    all.forEach(function (b) {
+      b.classList.remove('picked', 'faded');
+      if (b.textContent === q.answer) b.classList.add('right');
+      else if (b === btn) b.classList.add('wrong');
+      else b.classList.add('faded');
+    });
+
+    bumpScore(delta);
+    state.stats.played++;
+    if (correct) state.stats.right++;
+    if (state.diff === 'hard' && correct) state.stats.hardSurvived++;
+    if (delta < state.stats.worst) state.stats.worst = delta;
+
+    // подбираем отклик под связку «сложность × ставка × исход»
+    let title, cls, boring = false;
+    if (correct && state.diff === 'hard' && state.bet === 5) {
+      title = 'ГЕРОЙ!!!'; cls = 'good';
+      sfx.good(); sfx.fanfare();
+      shakeScreen();
+      bigWord('ГЕРОЙ!!!', '#FFDC5C');
+      burstFrom(el.card, 60, ['#FFDC5C', '#FFD93D', '#FF9F1C', '#ffffff']);
+      later(function () { burstFrom(el.scoreBox, 30, ['#FFDC5C', '#FFD93D']); }, 260);
+    } else if (correct && state.diff === 'hard') {
+      title = 'ВЫЖИЛ!'; cls = 'good';
+      sfx.good();
+      bigWord('ВЫЖИЛ!', '#95E061');
+      burstFrom(el.card, 40, ['#95E061', '#4ECDC4', '#FFD93D']);
+    } else if (correct && state.diff === 'easy' && state.bet === 1) {
+      // нарочно скучный отклик — это шутка, и она тоже отклик
+      title = '...ну ок'; cls = 'dull'; boring = true;
+      sfx.meh();
+      bigWord('...ну ок', '#a99fc4', true);
+    } else if (correct) {
+      title = 'ЕСТЬ!'; cls = 'good';
+      sfx.good();
+      bigWord('ЕСТЬ!', '#95E061');
+      burstFrom(el.card, 40, ['#95E061', '#FFD93D', '#4ECDC4']);
+    } else if (state.diff === 'hard' && state.bet === 5) {
+      title = 'АЙ-ЯЙ-ЯЙ!'; cls = 'bad';
+      sfx.bad(); sfx.growl();
+      shakeScreen();
+      bigWord('АЙ-ЯЙ-ЯЙ!', '#FF4444');
+      burstFrom(el.card, 55, ['#FF4444', '#FF3D8B', '#14102b']);
+    } else {
+      title = 'МИМО!'; cls = 'bad';
+      sfx.bad();
+      if (state.diff === 'hard') shakeScreen();
+      bigWord('МИМО!', '#FF4444');
+      burstFrom(el.card, 40, ['#FF4444', '#FF3D8B']);
+    }
+
+    el.caption.textContent = correct ? 'Мешок не сумел тебя укусить.' : 'Мешок победил в этом раунде.';
+    showResult(title, cls, correct, delta, boring);
+    state.phase = 'result';
+    state.busy = false;
+  }
+
+  function showResult(title, cls, correct, delta, boring) {
+    const q = state.current;
+    const info = DIFF[state.diff];
+    const painful = (!correct && state.diff === 'hard' && state.bet === 5);
+
+    const box = document.createElement('div');
+    box.className = 'result';
+
+    const h = document.createElement('h3');
+    h.className = cls;
+    h.textContent = title;
+    box.appendChild(h);
+
+    const math = document.createElement('div');
+    math.className = 'math';
+    math.textContent = 'Ставка ' + state.bet + ' × ' + info.mult + ' ' + info.emo +
+      ' = ' + (correct ? '+' : '−') + Math.abs(delta) + ' очков';
+    if (boring) math.textContent = 'Ставка 1 × 1 🍬 = +1 очко. Ну да, целое одно.';
+    box.appendChild(math);
+
+    const ans = document.createElement('div');
+    ans.className = 'hint-box';
+    ans.innerHTML = 'Правильно: <b></b>';
+    ans.querySelector('b').textContent = q.answer;
+    box.appendChild(ans);
+
+    const hint = document.createElement('div');
+    hint.className = 'hint-box' + (painful ? ' big' : '');
+    hint.style.marginTop = '8px';
+    hint.textContent = q.hint;
+    box.appendChild(hint);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (correct ? ' cyan' : ' pink');
+    btn.type = 'button';
+    btn.textContent = state.round + 1 >= ROUNDS ? '🏁 ИТОГИ' : '🎒 СЛЕДУЮЩИЙ МЕШОК';
+    btn.addEventListener('click', nextRound);
+    box.appendChild(btn);
+
+    el.resultSlot.innerHTML = '';
+    el.resultSlot.appendChild(box);
+    try { box.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' }); } catch (e) { /* ок */ }
+  }
+
+  function nextRound() {
+    if (state.busy || state.phase !== 'result') return;
+    state.busy = true;
+    sfx.click();
+    state.round++;
+    el.card.classList.remove('in');
+    el.card.classList.add('out');
+    el.resultSlot.innerHTML = '';
+    later(function () { startRound(); }, 380);
+  }
+
+  /* ==========================================================
+     15. ФИНАЛ ПАРТИИ
+     ========================================================== */
+  function endGame(kind) {
+    state.phase = 'over';
+    state.busy = false;
+    stopJerks();
+    el.bets.hidden = true;
+    el.table.hidden = true;
+
+    let title, sub, cls;
+    if (kind === 'win') {
+      title = 'МЕШОК ПУСТ!'; cls = 'win';
+      sub = 'Ты обчистил его до нитки — ' + state.score + ' очков!';
+      sfx.fanfare();
+      later(function () { burst(window.innerWidth / 2, window.innerHeight * 0.35, 60, ['#FFDC5C', '#FFD93D', '#FF9F1C', '#ffffff']); }, 120);
+      shakeScreen();
+    } else if (kind === 'lose') {
+      title = 'МЕШОК СЪЕЛ ВСЁ'; cls = 'lose';
+      sub = 'Очки кончились. Кот доволен.';
+      sfx.sad();
+      shakeScreen();
+    } else {
+      const win = state.score >= START_SCORE;
+      cls = win ? 'win' : 'lose';
+      title = win ? 'ПАРТИЯ ЗАКРЫТА!' : 'ПАРТИЯ ЗАКРЫТА';
+      sub = win ? 'Осталось ' + state.score + ' очков — ты в плюсе!' : 'Осталось ' + state.score + ' очков. Мешок сегодня хитрее.';
+      if (win) { sfx.fanfare(); later(function () { burst(window.innerWidth / 2, window.innerHeight * 0.35, 50, PAL); }, 120); }
+      else sfx.sad();
+    }
+
+    el.modalCard.innerHTML = '';
+
+    const h = document.createElement('h2');
+    h.className = cls;
+    h.textContent = title;
+    el.modalCard.appendChild(h);
+
+    const p = document.createElement('div');
+    p.className = 'modal-sub';
+    p.textContent = sub;
+    el.modalCard.appendChild(p);
+
+    const rows = [
+      ['Очков в кармане', String(state.score), false],
+      ['Сколько раз вытащил зверское', String(state.stats.hard), false],
+      ['Из них выжил', String(state.stats.hardSurvived), false],
+      ['Верных ответов', state.stats.right + ' из ' + Math.max(1, state.stats.played), false],
+      ['Самая дорогая ошибка', state.stats.worst === 0 ? 'ни одной' : '−' + Math.abs(state.stats.worst), true]
+    ];
+    rows.forEach(function (r) {
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      const label = document.createElement('span');
+      label.textContent = r[0];
+      const val = document.createElement('b');
+      if (r[2] && state.stats.worst !== 0) val.className = 'red';
+      val.textContent = r[1];
+      row.appendChild(label); row.appendChild(val);
+      el.modalCard.appendChild(row);
+    });
+
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.type = 'button';
+    btn.textContent = '🔄 Ещё разок';
+    btn.addEventListener('click', restart);
+    el.modalCard.appendChild(btn);
+
+    el.modal.hidden = false;
+  }
+
+  /* ==========================================================
+     16. РЕСТАРТ — чистим таймеры и всё состояние
+     ========================================================== */
+  function restart() {
+    sfx.click();
+    clearAllTimers();
+    stopJerks();
+    document.body.classList.remove('screen-shake');
+    el.bigword.className = 'bigword';
+    Array.prototype.slice.call(document.querySelectorAll('.particle')).forEach(function (p) {
+      if (p.parentNode) p.parentNode.removeChild(p);
+    });
+
+    state.score = START_SCORE;
+    state.round = 0;
+    state.bet = 0;
+    state.busy = false;
+    state.phase = 'idle';
+    state.current = null;
+    state.lastQ = null;
+    state.queue = [];
+    state.stats = { hard: 0, hardSurvived: 0, worst: 0, right: 0, played: 0 };
+
+    el.modal.hidden = true;
+    el.modalCard.innerHTML = '';
+    startRound();
+  }
+
+  /* ==========================================================
+     17. КНОПКИ И СТАРТ
+     ========================================================== */
+  coinBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      const amount = parseInt(b.getAttribute('data-bet'), 10) || 1;
+      placeBet(amount, b);
+    });
+  });
+
+  function paintSoundBtn() {
+    el.soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    el.soundBtn.style.background = soundOn ? '#4ECDC4' : '#8b83a8';
+  }
+  el.soundBtn.addEventListener('click', function () {
+    soundOn = !soundOn;
+    try { localStorage.setItem('kvm-sound', soundOn ? 'on' : 'off'); } catch (e) { /* без памяти тоже живём */ }
+    paintSoundBtn();
+    if (soundOn) sfx.click();
+  });
+  paintSoundBtn();
+
+  // если банк вдруг пустой — не даём игре молча сломаться
+  if (!QUESTIONS.length) {
+    el.caption.textContent = 'В мешке пусто: список заданий не заполнен.';
+    coinBtns.forEach(function (b) { b.disabled = true; });
+  } else {
+    startRound();
+  }
+})();
+</script>

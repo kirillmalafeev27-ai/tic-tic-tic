@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ДОЛГИ — немецкие глаголы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ПАЛИТРА И БАЗА
+   ============================================================ */
+:root{
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+
+  /* динамика напряжения */
+  --sq:1;          /* сжатие рабочей зоны, 1 → 0.62 */
+  --dot:22px;      /* плотность halftone */
+  --dot-a:.06;     /* яркость halftone */
+  --tension:0;     /* краснота фона 0..1 */
+
+  --font-head:'Bangers','Impact','Haettenschweiler',system-ui,sans-serif;
+  --font-body:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0; padding:0;
+  overflow-x:hidden;
+  max-width:100%;
+}
+
+body{
+  min-height:100vh;
+  font-family:var(--font-body);
+  color:#fff;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255,61,139,.30), transparent 46%),
+    radial-gradient(circle at 88% 10%, rgba(78,205,196,.26), transparent 44%),
+    radial-gradient(circle at 52% 94%, rgba(255,159,28,.22), transparent 50%),
+    linear-gradient(135deg, var(--bg), var(--bg-2));
+  background-attachment:fixed;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* halftone-сетка поверх всего */
+body::before{
+  content:'';
+  position:fixed; inset:0;
+  background-image:radial-gradient(circle, rgba(255,255,255,var(--dot-a)) 1px, transparent 1px);
+  background-size:var(--dot) var(--dot);
+  pointer-events:none;
+  z-index:50;
+  transition:background-size .9s ease;
+}
+
+/* красный налёт: сгущается, когда долгов много */
+#tint{
+  position:fixed; inset:0; pointer-events:none; z-index:45;
+  /* краснота поднимается снизу, от полки, но центр стола остаётся читаемым */
+  background:
+    radial-gradient(circle at 50% 106%, rgba(255,68,68,.55), transparent 58%),
+    radial-gradient(circle at 50% 42%, transparent 30%, rgba(140,10,38,.46) 100%);
+  opacity:calc(var(--tension) * .8);
+  transition:opacity .9s ease;
+}
+
+/* ============================================================
+   КАРКАС ЭКРАНА
+   ============================================================ */
+#app{
+  position:relative; z-index:10;
+  display:flex; flex-direction:column;
+  height:100vh; height:100dvh;
+  max-width:100%;
+  overflow:hidden;
+}
+
+/* ---------- шапка ---------- */
+#top{
+  position:relative;
+  flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  flex-wrap:wrap; gap:.4rem clamp(.5rem,2vw,1.1rem);
+  padding:clamp(.4rem,1.4vw,.9rem) clamp(.5rem,2vw,1rem) .3rem;
+}
+
+.title{
+  margin:0;
+  font-family:var(--font-head);
+  font-size:clamp(2rem,6.4vw,3.5rem);
+  letter-spacing:3px;
+  line-height:1;
+  background:linear-gradient(180deg, var(--orange) 20%, var(--pink) 90%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  filter:drop-shadow(4px 4px 0 var(--ink));
+  transform:rotate(-2deg);
+}
+
+.chips{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; justify-content:center; }
+
+.chip{
+  font-family:var(--font-head);
+  font-size:clamp(.95rem,2.4vw,1.35rem);
+  letter-spacing:1.5px;
+  padding:.3rem .8rem;
+  border:4px solid var(--ink);
+  border-radius:14px;
+  box-shadow:5px 5px 0 var(--ink);
+  color:var(--ink);
+  white-space:nowrap;
+}
+.chip b{ font-size:1.25em; }
+
+.chip-done{ background:var(--cyan); transform:rotate(-1.5deg); }
+
+.chip-debt{ background:var(--yellow); transform:rotate(1.5deg); transition:background .35s ease, color .35s ease; }
+.chip-debt.hot{ background:var(--red); color:#fff; animation:pulseChip 1.05s ease-in-out infinite; }
+.chip-debt.clean{ background:var(--green); }
+@keyframes pulseChip{
+  0%,100%{ transform:rotate(1.5deg) scale(1); }
+  50%    { transform:rotate(1.5deg) scale(1.08); }
+}
+
+/* звук — всегда в углу экрана */
+.icon-btn{
+  position:absolute;
+  top:clamp(.35rem,1.2vw,.8rem);
+  right:clamp(.35rem,1.5vw,1rem);
+  font-size:1.35rem; line-height:1;
+  width:48px; height:48px; min-width:48px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--yellow); color:var(--ink);
+  border:4px solid var(--ink); border-radius:14px;
+  box-shadow:5px 5px 0 var(--ink);
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.icon-btn:hover{ transform:translate(-3px,-3px); box-shadow:8px 8px 0 var(--ink); }
+.icon-btn:active{ transform:translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+
+/* ---------- рабочая зона ---------- */
+#stage{
+  flex:1 1 auto; min-height:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:clamp(.4rem,1.4vh,.9rem);
+  padding:clamp(.3rem,1.2vh,.8rem) clamp(.5rem,2.5vw,1.4rem);
+  overflow:hidden;
+}
+
+/* рабочая карточка: масштаб внутри — в em, поэтому вся сжимается через --sq */
+.task-card{
+  position:relative;
+  width:100%;
+  max-width:min(820px, 94vw);
+  font-size:calc(clamp(.9rem, 1.1vw + .5rem, 1.6rem) * var(--sq));
+  padding:1.5em 1.2em 1.3em;
+  background:linear-gradient(165deg,#4a2fa8,#33207a);
+  border:5px solid var(--ink);
+  border-radius:22px;
+  box-shadow:6px 6px 0 var(--ink);
+  transform:rotate(var(--rot,-1.5deg));
+  text-align:center;
+  transition:font-size .45s ease, padding .45s ease, background .3s ease;
+}
+.task-card.pop{ animation:cardIn .42s cubic-bezier(0.68,-0.55,0.265,1.55) both; }
+@keyframes cardIn{
+  0%  { opacity:0; transform:rotate(var(--rot,-1.5deg)) scale(.7) translateY(18px); }
+  60% { opacity:1; transform:rotate(var(--rot,-1.5deg)) scale(1.05); }
+  100%{ opacity:1; transform:rotate(var(--rot,-1.5deg)) scale(1); }
+}
+
+/* карточка-долг в руках: бумага, а не экран */
+.task-card.is-debt{
+  background:linear-gradient(170deg,#FFF7DE,#EBD8A6);
+  color:var(--ink);
+}
+.task-card.is-debt .tc-label{ background:var(--red); color:#fff; }
+.task-card.is-debt .tc-say{ color:rgba(20,16,43,.62); }
+
+.tc-label{
+  display:inline-block;
+  font-family:var(--font-head);
+  letter-spacing:2px;
+  font-size:.95em;
+  padding:.12em .8em;
+  background:var(--yellow); color:var(--ink);
+  border:3px solid var(--ink); border-radius:10px;
+  transform:rotate(-1.5deg);
+  margin-bottom:.55em;
+}
+
+.tc-prompt{
+  font-family:var(--font-head);
+  font-size:2.5em;
+  line-height:1.05;
+  letter-spacing:1px;
+  word-break:break-word;
+  text-shadow:3px 3px 0 rgba(20,16,43,.45);
+}
+.task-card.is-debt .tc-prompt{ text-shadow:2px 2px 0 rgba(20,16,43,.18); }
+
+.tc-say{
+  margin-top:.5em;
+  font-size:.95em;
+  color:rgba(255,255,255,.72);
+  font-weight:600;
+}
+
+/* правильный ответ — раскрывается после нажатия учителя */
+.tc-answer{
+  margin-top:.7em;
+  max-height:0; opacity:0; overflow:hidden;
+  transition:max-height .3s ease, opacity .3s ease, margin .3s ease;
+}
+.task-card.revealed .tc-answer{ max-height:6em; opacity:1; }
+.tc-answer i{
+  display:inline-block;
+  font-style:normal;
+  font-family:var(--font-head);
+  font-size:1.7em; letter-spacing:1px;
+  padding:.1em .7em;
+  background:var(--green); color:var(--ink);
+  border:4px solid var(--ink); border-radius:14px;
+  box-shadow:4px 4px 0 var(--ink);
+  transform:rotate(1.5deg);
+}
+
+/* штамп ×2 / ×3 на карточке-долге */
+.xmark{
+  position:absolute; top:-.7em; right:-.4em;
+  font-family:var(--font-head);
+  font-size:1.5em; letter-spacing:1px;
+  padding:.05em .45em;
+  background:var(--red); color:#fff;
+  border:4px solid var(--ink); border-radius:12px;
+  box-shadow:4px 4px 0 var(--ink);
+  transform:rotate(8deg);
+}
+
+/* трещина */
+.crack{ position:absolute; inset:0; width:100%; height:100%; opacity:0; pointer-events:none; transition:opacity .35s ease; }
+.crack path{ stroke:var(--ink); stroke-width:2.4; fill:none; stroke-linejoin:round; }
+.lvl2 .crack, .lvl3 .crack{ opacity:.85; }
+
+/* ---------- подсказка ---------- */
+#hintBar{
+  width:100%; max-width:min(820px,94vw);
+  font-size:calc(clamp(.8rem,.6vw + .62rem,1.15rem) * var(--sq));
+  padding:.6em .9em;
+  background:rgba(255,255,255,.10);
+  border:3px dashed rgba(255,255,255,.35);
+  border-radius:16px;
+  text-align:center; line-height:1.35;
+  transform:rotate(.6deg);
+  transition:font-size .45s ease, background .3s ease, border-color .3s ease;
+}
+#hintBar.key{
+  background:rgba(255,217,61,.18);
+  border-color:var(--yellow);
+  border-style:solid;
+  animation:hintPop .45s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+@keyframes hintPop{ 0%{ transform:rotate(.6deg) scale(.85); } 60%{ transform:rotate(.6deg) scale(1.04); } 100%{ transform:rotate(.6deg) scale(1); } }
+#hintBar b{ color:var(--yellow); }
+
+/* ---------- кнопки судьи ---------- */
+#judge{
+  display:flex; flex-wrap:wrap; gap:clamp(.5rem,2vw,1rem);
+  justify-content:center; width:100%;
+}
+.pbtn{
+  font-family:var(--font-head);
+  letter-spacing:1.5px;
+  font-size:clamp(1.05rem,2.8vw,1.6rem);
+  padding:.5em 1.1em;
+  min-height:56px;
+  flex:1 1 40%;
+  max-width:260px;
+  color:var(--ink);
+  border:5px solid var(--ink);
+  border-radius:18px;
+  box-shadow:6px 6px 0 var(--ink);
+  cursor:pointer;
+  transform:rotate(var(--rot,0deg));
+  transition:transform .12s ease, box-shadow .12s ease, opacity .2s ease;
+}
+.pbtn:hover:not(:disabled){ transform:rotate(var(--rot,0deg)) translate(-3px,-3px); box-shadow:9px 9px 0 var(--ink); }
+.pbtn:active:not(:disabled){ transform:rotate(var(--rot,0deg)) translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+.pbtn:disabled{ opacity:.45; cursor:default; }
+.pbtn.ok{ background:var(--green); --rot:-1.5deg; }
+.pbtn.no{ background:var(--orange); --rot:1.5deg; }
+
+/* ---------- ПОЛКА ДОЛГОВ ---------- */
+#shelfWrap{
+  flex:0 0 auto;
+  position:relative;
+  border-top:5px solid var(--ink);
+  background:linear-gradient(180deg, rgba(20,16,43,.42), rgba(20,16,43,.86));
+  padding:.35rem clamp(.4rem,2vw,1rem) .45rem;
+  transition:padding .4s ease, background .5s ease;
+}
+#shelfWrap.empty{ background:linear-gradient(180deg, rgba(20,16,43,.18), rgba(20,16,43,.5)); }
+#shelfWrap.bounce{ animation:shelfBounce .45s cubic-bezier(.3,1.5,.5,1); }
+@keyframes shelfBounce{
+  0%{ transform:translateY(0); }
+  22%{ transform:translateY(9px); }
+  55%{ transform:translateY(-5px); }
+  100%{ transform:translateY(0); }
+}
+
+#shelfLabel{
+  font-family:var(--font-head);
+  letter-spacing:2px;
+  font-size:clamp(.72rem,1.9vw,.98rem);
+  text-align:center;
+  color:rgba(255,255,255,.55);
+  margin-bottom:.15rem;
+}
+#shelfWrap:not(.empty) #shelfLabel{ color:var(--yellow); }
+
+#shelf{
+  display:flex; flex-wrap:wrap;
+  align-items:flex-end; justify-content:center;
+  max-height:34vh;
+  overflow-y:auto; overflow-x:hidden;
+  padding:2px 16px 0;
+}
+
+/* карточка долга — бумажка внахлёст */
+.debt{
+  position:relative;
+  flex:0 0 auto;
+  width:clamp(108px, 21vw, 164px);
+  min-height:56px;
+  margin:5px -7px 2px;
+  padding:.4rem .5rem .35rem;
+  font-family:var(--font-body);
+  text-align:center;
+  background:linear-gradient(170deg,#FFF7DE,#EFDCAB);
+  color:var(--ink);
+  border:4px solid var(--ink);
+  border-radius:12px;
+  box-shadow:4px 4px 0 var(--ink);
+  transform:rotate(var(--rot,0deg));
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, filter .45s ease;
+}
+.debt:hover{ transform:rotate(var(--rot,0deg)) translate(-3px,-3px); box-shadow:7px 7px 0 var(--ink); z-index:6; }
+.debt:active{ transform:rotate(var(--rot,0deg)) translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+.debt:focus-visible{ outline:4px solid var(--cyan); outline-offset:3px; }
+
+.debt .d-txt{
+  font-weight:700;
+  font-size:clamp(.7rem,1.9vw,.9rem);
+  line-height:1.15;
+  word-break:break-word;
+}
+.debt .d-sub{
+  margin-top:.15rem;
+  font-size:clamp(.58rem,1.5vw,.72rem);
+  color:rgba(20,16,43,.55);
+  font-weight:600;
+}
+.debt .d-x{
+  position:absolute; top:-9px; right:-7px;
+  font-family:var(--font-head);
+  font-size:.95rem; line-height:1;
+  padding:.12em .38em;
+  background:var(--red); color:#fff;
+  border:3px solid var(--ink); border-radius:9px;
+  transform:rotate(9deg);
+}
+.debt.lvl3{ filter:brightness(.68) saturate(.7); animation:tremble .85s linear infinite; }
+.debt.lvl3:hover{ animation:none; }
+@keyframes tremble{
+  0%,100%{ transform:rotate(var(--rot,0deg)) translate(0,0); }
+  25%    { transform:rotate(calc(var(--rot,0deg) + .8deg)) translate(1px,-1px); }
+  50%    { transform:rotate(var(--rot,0deg)) translate(-1px,1px); }
+  75%    { transform:rotate(calc(var(--rot,0deg) - .8deg)) translate(1px,1px); }
+}
+.debt.slam{ animation:slam .36s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes slam{
+  0%  { transform:rotate(var(--rot,0deg)) scale(1.3); }
+  55% { transform:rotate(var(--rot,0deg)) scale(.9); }
+  100%{ transform:rotate(var(--rot,0deg)) scale(1); }
+}
+
+/* ---------- подвал ---------- */
+#foot{
+  flex:0 0 auto;
+  display:flex; justify-content:center;
+  padding:.3rem 0 .45rem;
+}
+#giveUp{
+  font-family:var(--font-body);
+  font-size:.8rem; font-weight:600;
+  min-height:44px;
+  padding:.4rem 1.1rem;
+  color:rgba(255,255,255,.42);
+  background:rgba(255,255,255,.07);
+  border:2px solid rgba(255,255,255,.16);
+  border-radius:12px;
+  cursor:pointer;
+  transition:color .2s ease, background .2s ease, transform .12s ease;
+}
+#giveUp:hover{ color:rgba(255,255,255,.75); background:rgba(255,255,255,.12); transform:translateY(-2px); }
+#giveUp:active{ transform:translateY(2px); }
+
+/* ============================================================
+   СЛОЙ ЭФФЕКТОВ: летающие карточки и частицы
+   ============================================================ */
+#fx{
+  position:fixed; inset:0;
+  pointer-events:none; z-index:60;
+  overflow:hidden;
+}
+.flier{ position:absolute; transform-origin:0 0; will-change:transform,opacity; }
+.flier > *{
+  width:100%; height:100%;
+  margin:0 !important;
+  transform:none !important;
+  visibility:visible !important;
+  animation:none !important;
+}
+.particle{ position:absolute; display:block; border-radius:3px; will-change:transform,opacity; }
+
+/* крупная надпись во весь экран */
+#bigText{
+  position:fixed; inset:0; z-index:70;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:1rem;
+  pointer-events:none; opacity:0;
+}
+#bigText span{
+  font-family:var(--font-head);
+  font-size:clamp(4rem,16vw,9rem);
+  line-height:.92;
+  letter-spacing:3px;
+  color:var(--gold);
+  -webkit-text-stroke:3px var(--ink);
+  text-shadow:7px 7px 0 var(--ink);
+}
+#bigText.show{ animation:bigPop 1.7s ease forwards; }
+@keyframes bigPop{
+  0%  { opacity:0; transform:scale(.3) rotate(-9deg); }
+  20% { opacity:1; transform:scale(1.14) rotate(2.5deg); }
+  32% { opacity:1; transform:scale(1) rotate(-1.5deg); }
+  76% { opacity:1; transform:scale(1) rotate(-1.5deg); }
+  100%{ opacity:0; transform:scale(1.08) rotate(-1.5deg); }
+}
+
+/* тряска экрана */
+.screen-shake{ animation:shakeIt .5s ease; }
+@keyframes shakeIt{
+  0%,100%{ transform:translate(0,0) rotate(0deg); }
+  12%{ transform:translate(-7px,4px) rotate(-.5deg); }
+  27%{ transform:translate(6px,-5px) rotate(.5deg); }
+  42%{ transform:translate(-5px,-3px) rotate(-.35deg); }
+  61%{ transform:translate(4px,5px) rotate(.35deg); }
+  80%{ transform:translate(-3px,2px) rotate(-.2deg); }
+}
+
+/* ============================================================
+   МОДАЛКИ
+   ============================================================ */
+#modal{
+  position:fixed; inset:0; z-index:80;
+  display:flex; align-items:center; justify-content:center;
+  padding:1rem;
+  background:rgba(9,6,28,.84);
+}
+#modal.hidden{ display:none; }
+.mbox{
+  width:min(560px,94vw);
+  max-height:90vh; overflow-y:auto;
+  padding:clamp(1rem,3vw,1.8rem);
+  background:linear-gradient(165deg,#3b2590,#241663);
+  border:5px solid var(--ink);
+  border-radius:22px;
+  box-shadow:6px 6px 0 var(--ink);
+  transform:rotate(-1.2deg);
+  text-align:center;
+  animation:cardIn .5s cubic-bezier(0.68,-0.55,0.265,1.55) both;
+}
+.mtitle{
+  margin:0 0 .5rem;
+  font-family:var(--font-head);
+  font-size:clamp(2rem,7vw,3.2rem);
+  letter-spacing:2px;
+  line-height:1;
+  color:var(--gold);
+  -webkit-text-stroke:2px var(--ink);
+  text-shadow:5px 5px 0 var(--ink);
+}
+.mtitle.calm{ color:var(--cyan); }
+.mline{ font-size:clamp(.92rem,2.4vw,1.1rem); line-height:1.5; margin:.45rem 0; }
+.mstats{
+  display:flex; flex-direction:column; gap:.4rem;
+  margin:.9rem 0 1rem;
+}
+.mstat{
+  display:flex; justify-content:space-between; gap:.6rem;
+  padding:.45rem .75rem;
+  background:rgba(255,255,255,.09);
+  border:3px solid rgba(20,16,43,.55);
+  border-radius:14px;
+  font-size:clamp(.82rem,2.2vw,1rem);
+  text-align:left;
+}
+.mstat b{ font-family:var(--font-head); font-size:1.3em; letter-spacing:1px; color:var(--yellow); }
+.mstat.good b{ color:var(--green); }
+.mstat.warm b{ color:var(--orange); }
+.mnote{
+  font-size:clamp(.9rem,2.3vw,1.08rem);
+  font-weight:600;
+  color:var(--green);
+  margin:.2rem 0 1rem;
+}
+.mbtns{ display:flex; flex-wrap:wrap; gap:.7rem; justify-content:center; }
+.mbtn{
+  font-family:var(--font-head);
+  letter-spacing:1.5px;
+  font-size:clamp(1rem,2.6vw,1.4rem);
+  padding:.45em 1.1em;
+  min-height:52px;
+  color:var(--ink);
+  background:var(--yellow);
+  border:5px solid var(--ink);
+  border-radius:18px;
+  box-shadow:6px 6px 0 var(--ink);
+  cursor:pointer;
+  transform:rotate(var(--rot,-1.5deg));
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.mbtn:hover{ transform:rotate(var(--rot,-1.5deg)) translate(-3px,-3px); box-shadow:9px 9px 0 var(--ink); }
+.mbtn:active{ transform:rotate(var(--rot,-1.5deg)) translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+.mbtn.ghost{ background:var(--cyan); --rot:1.5deg; }
+
+/* ============================================================
+   АДАПТИВ
+   ============================================================ */
+@media (max-height:560px){
+  .title{ font-size:clamp(1.5rem,5vw,2.2rem); }
+  .tc-say{ display:none; }
+  .task-card{ padding:1em 1em .9em; }
+  #shelf{ max-height:30vh; }
+}
+@media (max-width:400px){
+  .pbtn{ flex:1 1 100%; max-width:none; }
+}
+
+/* ============================================================
+   ЩАДЯЩИЙ РЕЖИМ: без тряски и разлёта, состояния остаются
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  .screen-shake{ animation:none !important; }
+  #shelfWrap.bounce{ animation:none !important; }
+  .debt.lvl3{ animation:none !important; }
+  .debt.slam{ animation:none !important; }
+  #bigText.show{ animation:none !important; opacity:1; }
+  .task-card.pop, .mbox{ animation-duration:.01s !important; }
+  #hintBar.key{ animation:none !important; }
+  .chip-debt.hot{ animation:none !important; }
+  *{ transition-duration:.12s !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="tint"></div>
+
+<div id="app">
+
+  <!-- ШАПКА: название, счётчики, звук -->
+  <header id="top">
+    <h1 class="title">ДОЛГИ</h1>
+    <div class="chips">
+      <div class="chip chip-done">ЗАКРЫТО <b id="doneNum">0</b>/<span id="totalNum">10</span></div>
+      <div class="chip chip-debt clean" id="debtChip">ЧИСТО ✨</div>
+    </div>
+    <button id="soundBtn" class="icon-btn" type="button" title="Звук" aria-label="Звук">🔊</button>
+  </header>
+
+  <!-- РАБОЧАЯ ЗОНА -->
+  <main id="stage">
+    <div id="cardHost" style="width:100%; display:flex; justify-content:center;">
+      <div class="task-card" id="taskCard"></div>
+    </div>
+    <div id="hintBar"></div>
+    <div id="judge">
+      <button class="pbtn ok" id="btnOk" type="button">✅ ВЕРНО</button>
+      <button class="pbtn no" id="btnNo" type="button">❌ ОШИБКА</button>
+    </div>
+  </main>
+
+  <!-- ПОЛКА ДОЛГОВ -->
+  <section id="shelfWrap" class="empty">
+    <div id="shelfLabel">полка долгов пуста</div>
+    <div id="shelf"></div>
+  </section>
+
+  <footer id="foot">
+    <button id="giveUp" type="button">Сдаться</button>
+  </footer>
+
+</div>
+
+<div id="fx"></div>
+<div id="bigText"><span></span></div>
+<div id="modal" class="hidden"><div class="mbox" id="mbox"></div></div>
+
+<script>
+/* ============================================================
+   1. БАНК ЗАДАНИЙ
+   ============================================================ */
+
+// ⬇️ ЗАМЕНИ ЭТОТ СПИСОК, ЧТОБЫ ИГРАТЬ В ЛЮБУЮ ДРУГУЮ ТЕМУ.
+// Формат: prompt — что показываем, answer — правильный ответ, hint — объяснение правила.
+const QUESTIONS = [
+  {prompt: "ich + machen (делать)",      answer: "ich mache",   hint: "После ich → окончание -e. Основа mach- + e = mache"},
+  {prompt: "du + spielen (играть)",      answer: "du spielst",  hint: "После du → окончание -st. Основа spiel- + st = spielst"},
+  {prompt: "er + lernen (учить)",        answer: "er lernt",    hint: "После er/sie/es → окончание -t. Основа lern- + t = lernt"},
+  {prompt: "sie + malen (рисовать)",     answer: "sie malt",    hint: "После sie (она) → окончание -t. Основа mal- + t = malt"},
+  {prompt: "es + kommen (приходить)",    answer: "es kommt",    hint: "После es → окончание -t. Основа komm- + t = kommt"},
+  {prompt: "wir + wohnen (жить)",        answer: "wir wohnen",  hint: "После wir → окончание -en, как инфинитив. wohn- + en = wohnen"},
+  {prompt: "ihr + singen (петь)",        answer: "ihr singt",   hint: "После ihr → окончание -t. Основа sing- + t = singt"},
+  {prompt: "sie + trinken (пить)",       answer: "sie trinken", hint: "После sie (они) → окончание -en. Основа trink- + en = trinken"},
+  {prompt: "du + heißen (зваться)",      answer: "du heißt",    hint: "⚠️ ХИТРО! Основа уже кончается на ß (heiß-), поэтому только -t, а не -st. du heißt, НЕ du heißst"},
+  {prompt: "ihr + tanzen (танцевать)",   answer: "ihr tanzt",   hint: "Основа tanz- + t = tanzt. Произносим «танцт»"},
+  {prompt: "ich + sein (быть)",          answer: "ich bin",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ глагол! Учим наизусть: ich BIN"},
+  {prompt: "du + sein (быть)",           answer: "du bist",     hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: du BIST"},
+  {prompt: "er + sein (быть)",           answer: "er ist",      hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! Учим наизусть: er/sie/es IST"},
+  {prompt: "wir + sein (быть)",          answer: "wir sind",    hint: "🌟 sein — НЕПРАВИЛЬНЫЙ! wir SIND"},
+  {prompt: "ich + haben (иметь)",        answer: "ich habe",    hint: "В форме ich окончание обычное: hab- + e = habe"},
+  {prompt: "du + haben (иметь)",         answer: "du hast",     hint: "🌟 haben — НЕПРАВИЛЬНЫЙ в du и er! Буква -b- ПРОПАДАЕТ: du HAST (не habst)"},
+  {prompt: "er + haben (иметь)",         answer: "er hat",      hint: "🌟 haben — НЕПРАВИЛЬНЫЙ! Буква -b- ПРОПАДАЕТ: er HAT (не habt)"},
+  {prompt: "ihr + haben (иметь)",        answer: "ihr habt",    hint: "У ihr всё честно: hab- + t = habt"},
+  {prompt: "du + arbeiten (работать)",   answer: "du arbeitest",hint: "⚠️ Основа кончается на -t (arbeit-), между основой и окончанием вставляем -e-: arbeit-e-st"},
+  {prompt: "er + finden (находить)",     answer: "er findet",   hint: "⚠️ Основа кончается на -d (find-), вставляем -e-: find-e-t = findet"},
+  {prompt: "wir + gehen (идти)",         answer: "wir gehen",   hint: "После wir → -en. geh- + en = gehen"},
+  {prompt: "ihr + lesen (читать)",       answer: "ihr lest",    hint: "Основа кончается на -s (les-), поэтому только -t: lest"},
+  {prompt: "du + fahren (ехать)",        answer: "du fährst",   hint: "🌟 Корневая гласная меняется: a → ä. du FÄHRST"},
+  {prompt: "er + sprechen (говорить)",   answer: "er spricht",  hint: "🌟 Корневая гласная меняется: e → i. er SPRICHT"}
+];
+
+/* ============================================================
+   2. УТИЛИТЫ: ссылки на узлы, таймеры, склонения
+   ============================================================ */
+
+const $ = function(id){ return document.getElementById(id); };
+
+const elCard    = $('taskCard');
+const elHint    = $('hintBar');
+const elShelf   = $('shelf');
+const elShelfW  = $('shelfWrap');
+const elShelfL  = $('shelfLabel');
+const elFx      = $('fx');
+const elBig     = $('bigText');
+const elBigTxt  = elBig.firstElementChild;
+const elModal   = $('modal');
+const elMbox    = $('mbox');
+const elDone    = $('doneNum');
+const elTotal   = $('totalNum');
+const elChip    = $('debtChip');
+const btnOk     = $('btnOk');
+const btnNo     = $('btnNo');
+const btnSound  = $('soundBtn');
+const btnGive   = $('giveUp');
+const elFoot    = $('foot');
+
+// щадящий режим — проверяем каждый раз, вдруг переключили на ходу
+const RMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+function reduced(){ return !!(RMQ && RMQ.matches); }
+
+// все таймеры под учётом, чтобы рестарт гарантированно всё гасил
+const timers = new Set();
+function later(fn, ms){
+  const id = setTimeout(function(){ timers.delete(id); fn(); }, ms);
+  timers.add(id);
+  return id;
+}
+function clearTimers(){
+  timers.forEach(function(id){ clearTimeout(id); });
+  timers.clear();
+}
+
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+function rnd(a, b){ return a + Math.random() * (b - a); }
+
+// русские склонения
+function plural(n, one, few, many){
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return one;
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return few;
+  return many;
+}
+function debtWord(n){ return plural(n, 'долг', 'долга', 'долгов'); }
+function tryWord(n){ return plural(n, 'попытка', 'попытки', 'попыток'); }
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ============================================================
+   3. ЗВУК: Web Audio, генерация на лету, ленивый запуск
+   ============================================================ */
+
+let actx = null, master = null, muted = false;
+
+try{
+  muted = localStorage.getItem('dolgi_sound') === 'off';
+}catch(e){ muted = false; }
+
+function ensureAudio(){
+  if (actx) return actx;
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    actx = new Ctx();
+    master = actx.createGain();
+    master.gain.value = 0.5;
+    master.connect(actx.destination);
+  }catch(e){ actx = null; master = null; }
+  return actx;
+}
+
+function audioReady(){
+  if (muted) return null;
+  const c = ensureAudio();
+  if (!c || !master) return null;
+  try{ if (c.state === 'suspended') c.resume(); }catch(e){}
+  return c;
+}
+
+// одиночный тон с конвертом громкости
+function tone(freq, at, dur, type, peak, glideTo){
+  try{
+    const c = actx;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || 'triangle';
+    o.frequency.setValueAtTime(freq, at);
+    if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, at + dur);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(peak || 0.16, at + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g); g.connect(master);
+    o.start(at); o.stop(at + dur + 0.04);
+  }catch(e){}
+}
+
+// шумовой всплеск — удар бумаги о стол
+function noiseHit(at, dur, peak, filterType, f0, f1){
+  try{
+    const c = actx;
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = buf;
+    const flt = c.createBiquadFilter();
+    flt.type = filterType || 'lowpass';
+    flt.frequency.setValueAtTime(f0, at);
+    if (f1) flt.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    flt.Q.value = 1.1;
+    const g = c.createGain();
+    g.gain.setValueAtTime(peak, at);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    src.connect(flt); flt.connect(g); g.connect(master);
+    src.start(at); src.stop(at + dur + 0.02);
+  }catch(e){}
+}
+
+// нейтральный клик
+function sndClick(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  tone(560, t, 0.06, 'square', 0.10);
+  tone(760, t + 0.045, 0.06, 'square', 0.07);
+}
+// мягкий щелчок — берём бумажку с полки
+function sndPick(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  noiseHit(t, 0.09, 0.10, 'bandpass', 2600, 1400);
+  tone(420, t, 0.10, 'triangle', 0.09, 620);
+}
+// закрыли обычное задание — короткое восходящее арпеджио
+function sndOk(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f, i){
+    tone(f, t + i * 0.075, 0.18, 'triangle', 0.15);
+  });
+  noiseHit(t, 0.05, 0.05, 'highpass', 3000);
+}
+// ошибка: удар бумаги о стол + низкий нисходящий
+function sndThud(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  noiseHit(t, 0.26, 0.42, 'lowpass', 1500, 240);
+  tone(150, t, 0.30, 'sawtooth', 0.11, 62);
+  tone(300, t + 0.02, 0.20, 'triangle', 0.07, 110);
+}
+// долг закрыт: треск разрыва + восходящее облегчение
+function sndRelief(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  noiseHit(t, 0.22, 0.30, 'bandpass', 900, 5200);   // сам разрыв бумаги
+  [392, 523.25, 659.25, 880].forEach(function(f, i){
+    tone(f, t + 0.10 + i * 0.085, 0.26, 'triangle', 0.16);
+  });
+  tone(1318.5, t + 0.47, 0.5, 'sine', 0.10);
+}
+// финальный фанфар
+function sndFanfare(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5];
+  notes.forEach(function(f, i){
+    tone(f, t + i * 0.11, 0.34, 'square', 0.12);
+    tone(f * 2, t + i * 0.11, 0.30, 'triangle', 0.06);
+  });
+  const t2 = t + 0.5;
+  [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function(f){
+    tone(f, t2, 1.1, 'triangle', 0.11);
+  });
+  noiseHit(t2, 0.6, 0.13, 'highpass', 2200, 6000);
+}
+// тихий отказ — клик по заблокированному
+function sndDeny(){
+  if (!audioReady()) return;
+  const t = actx.currentTime;
+  tone(180, t, 0.09, 'sine', 0.07, 130);
+}
+
+function paintSound(){
+  btnSound.textContent = muted ? '🔇' : '🔊';
+  btnSound.setAttribute('aria-label', muted ? 'Включить звук' : 'Выключить звук');
+}
+btnSound.addEventListener('click', function(){
+  muted = !muted;
+  try{ localStorage.setItem('dolgi_sound', muted ? 'off' : 'on'); }catch(e){}
+  paintSound();
+  if (!muted) sndClick();
+});
+paintSound();
+
+// AudioContext создаём только по первому жесту — иначе браузер заблокирует
+function firstGesture(){
+  ensureAudio();
+  try{ if (actx && actx.state === 'suspended') actx.resume(); }catch(e){}
+  window.removeEventListener('pointerdown', firstGesture);
+  window.removeEventListener('keydown', firstGesture);
+}
+window.addEventListener('pointerdown', firstGesture);
+window.addEventListener('keydown', firstGesture);
+
+/* ============================================================
+   4. ЭФФЕКТЫ: частицы, тряска, крупная надпись, полёты карточек
+   ============================================================ */
+
+// веер частиц
+function burst(x, y, count, colors, power){
+  if (reduced()) return;
+  const p = power || 1;
+  for (let i = 0; i < count; i++){
+    const el = document.createElement('i');
+    el.className = 'particle';
+    const size = rnd(6, 15);
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.background = colors[i % colors.length];
+    el.style.border = '2px solid #14102b';
+    if (i % 3 === 0) el.style.borderRadius = '50%';
+    elFx.appendChild(el);
+
+    const ang = rnd(-Math.PI, 0) + rnd(-0.5, 0.5);
+    const dist = rnd(90, 320) * p;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist;
+    const dur = rnd(700, 1250);
+    try{
+      el.animate([
+        { transform:'translate(-50%,-50%) rotate(0deg) scale(1)', opacity:1 },
+        { transform:'translate(calc(-50% + ' + dx * 0.75 + 'px), calc(-50% + ' + (dy - rnd(20,70)) + 'px)) rotate(' + rnd(-220,220) + 'deg) scale(1.1)', opacity:1, offset:0.55 },
+        { transform:'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + (dy + rnd(180, 420)) + 'px)) rotate(' + rnd(-540,540) + 'deg) scale(.5)', opacity:0 }
+      ], { duration: dur, easing:'cubic-bezier(.2,.7,.4,1)', fill:'forwards' });
+    }catch(e){ el.style.opacity = '0'; }
+    later(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, dur + 60);
+  }
+}
+
+function burstAt(rect, count, colors, power){
+  burst(rect.left + rect.width / 2, rect.top + rect.height / 2, count, colors, power);
+}
+
+// тряска всего экрана
+function shake(){
+  if (reduced()) return;
+  document.body.classList.remove('screen-shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('screen-shake');
+  later(function(){ document.body.classList.remove('screen-shake'); }, 520);
+}
+
+// надпись во весь экран
+function bigText(txt, color){
+  elBigTxt.textContent = txt;
+  elBigTxt.style.color = color || 'var(--gold)';
+  elBig.classList.remove('show');
+  void elBig.offsetWidth;
+  elBig.classList.add('show');
+  later(function(){ elBig.classList.remove('show'); }, 1750);
+}
+
+// клон-«летун» поверх интерфейса
+function makeFlier(html, rect, cls){
+  const f = document.createElement('div');
+  f.className = 'flier' + (cls ? ' ' + cls : '');
+  f.style.left = rect.left + 'px';
+  f.style.top = rect.top + 'px';
+  f.style.width = rect.width + 'px';
+  f.style.height = rect.height + 'px';
+  f.innerHTML = html;
+  // клон не должен унаследовать ни скрытость оригинала, ни его анимацию появления
+  const kid = f.firstElementChild;
+  if (kid){
+    kid.classList.remove('pop');
+    kid.style.visibility = 'visible';
+  }
+  elFx.appendChild(f);
+  return f;
+}
+function play(el, frames, dur, easing){
+  try{
+    el.animate(frames, { duration: reduced() ? Math.min(dur, 200) : dur, easing: reduced() ? 'linear' : easing, fill:'forwards' });
+  }catch(e){}
+}
+function drop(el){ if (el && el.parentNode) el.parentNode.removeChild(el); }
+
+/* ============================================================
+   5. СОСТОЯНИЕ ПАРТИИ
+   ============================================================ */
+
+const TOTAL = 10;                 // заданий в очереди
+
+let queue = [];                   // очередь заданий
+let debts = [];                   // полка долгов (порядок = порядок в DOM)
+let allTasks = [];                // все задания партии — для статистики
+let current = null;               // что сейчас в работе
+let busy = false;                 // ход обрабатывается, клики игнорируем
+let closed = 0, firstTry = 0, returned = 0;
+let seq = 0;
+let gameOver = false;
+
+function makeQueue(){
+  queue = []; debts = []; allTasks = []; seq = 0;
+  if (!QUESTIONS.length) return;
+  let bag = shuffle(QUESTIONS.slice());
+  for (let i = 0; i < TOTAL; i++){
+    // если заданий меньше, чем ходов, — перемешиваем и идём на второй круг
+    if (!bag.length) bag = shuffle(QUESTIONS.slice());
+    const q = bag.shift();
+    const task = {
+      id: ++seq,
+      q: q,
+      fails: 0,      // сколько раз не закрыл
+      attempts: 0,   // сколько раз вообще проверяли
+      rot: rnd(-3.2, 3.2),
+      el: null
+    };
+    allTasks.push(task);
+    queue.push(task);
+  }
+}
+
+/* ============================================================
+   6. РЕНДЕР: рабочая карточка, полка, подсказка
+   ============================================================ */
+
+const CRACK_SVG = '<svg class="crack" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">' +
+  '<path d="M52 -3 L45 11 L55 21 L43 33 L53 45 L46 63"/></svg>';
+
+function cardHTML(task){
+  const isDebt = task.fails > 0;
+  const label = isDebt ? 'ДОЛГ' : 'ЗАДАНИЕ';
+  const xm = task.fails >= 2 ? '<div class="xmark">×' + task.fails + '</div>' : '';
+  const crack = task.fails >= 2 ? CRACK_SVG : '';
+  return '' +
+    xm + crack +
+    '<div class="tc-label">' + label + '</div>' +
+    '<div class="tc-prompt">' + esc(task.q.prompt) + '</div>' +
+    '<div class="tc-say">' + (isDebt ? 'закрой долг — скажи форму вслух' : 'скажи форму вслух') + '</div>' +
+    '<div class="tc-answer"><i>' + esc(task.q.answer) + '</i></div>';
+}
+
+function renderCard(pop){
+  if (!current) return;
+  elCard.className = 'task-card' +
+    (current.fails > 0 ? ' is-debt' : '') +
+    (current.fails >= 2 ? ' lvl2' : '') +
+    (current.fails >= 3 ? ' lvl3' : '');
+  elCard.style.setProperty('--rot', current.rot.toFixed(2) + 'deg');
+  elCard.innerHTML = cardHTML(current);
+  elCard.style.visibility = '';
+  if (pop){
+    elCard.classList.remove('pop');
+    void elCard.offsetWidth;
+    elCard.classList.add('pop');
+  }
+}
+
+function showHint(task, asKey){
+  elHint.classList.remove('key');
+  if (asKey){
+    elHint.innerHTML = '<b>ключ к долгу:</b> ' + esc(task.q.hint);
+    void elHint.offsetWidth;          // перезапускаем анимацию подсказки
+    elHint.classList.add('key');
+  } else {
+    elHint.innerHTML = 'Скажи ответ вслух — учитель нажмёт кнопку.';
+  }
+}
+
+// DOM-карточка долга на полке
+function makeDebtEl(task){
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'debt' + (task.fails >= 2 ? ' lvl2' : '') + (task.fails >= 3 ? ' lvl3' : '');
+  el.style.setProperty('--rot', task.rot.toFixed(2) + 'deg');
+  el.dataset.id = String(task.id);
+  el.innerHTML =
+    (task.fails >= 2 ? '<div class="d-x">×' + task.fails + '</div>' : '') +
+    (task.fails >= 2 ? CRACK_SVG : '') +
+    '<div class="d-txt">' + esc(task.q.prompt.split('(')[0].trim()) + '</div>' +
+    '<div class="d-sub">закрыть</div>';
+  el.addEventListener('click', function(){ onDebtClick(task); });
+  return el;
+}
+
+// повесить долг на полку (без полёта)
+function mountDebt(task){
+  const el = makeDebtEl(task);
+  task.el = el;
+  elShelf.appendChild(el);
+  return el;
+}
+
+function unmountDebt(task){
+  if (task.el){ drop(task.el); task.el = null; }
+}
+
+/* ============================================================
+   7. ДАВЛЕНИЕ: счётчики, сжатие рабочей зоны, сгущение фона
+   ============================================================ */
+
+function hangingCount(){
+  return debts.length + (current && current.fails > 0 ? 1 : 0);
+}
+
+function updatePressure(){
+  const hang = hangingCount();
+  const onShelf = debts.length;
+
+  elDone.textContent = String(closed);
+  elTotal.textContent = String(TOTAL);
+
+  if (hang === 0){
+    elChip.textContent = 'ЧИСТО ✨';
+    elChip.className = 'chip chip-debt clean';
+  } else {
+    elChip.textContent = 'ВИСИТ: ' + hang;
+    elChip.className = 'chip chip-debt hot';
+  }
+
+  // полка отъедает место: рабочая карточка поджимается
+  const sq = Math.max(0.62, 1 - onShelf * 0.055);
+  document.documentElement.style.setProperty('--sq', sq.toFixed(3));
+
+  // фон краснеет и halftone уплотняется
+  const tension = Math.max(0, Math.min(1, (hang - 2) / 6));
+  document.documentElement.style.setProperty('--tension', tension.toFixed(3));
+  document.documentElement.style.setProperty('--dot', (22 - tension * 8).toFixed(1) + 'px');
+  document.documentElement.style.setProperty('--dot-a', (0.06 + tension * 0.05).toFixed(3));
+
+  elShelfW.classList.toggle('empty', onShelf === 0);
+  elShelfL.textContent = onShelf === 0
+    ? 'полка долгов пуста'
+    : 'ПОЛКА ДОЛГОВ · ' + onShelf + ' ' + debtWord(onShelf) + ' · жми на бумажку, чтобы закрыть';
+}
+
+function lockJudge(v){
+  btnOk.disabled = v;
+  btnNo.disabled = v;
+}
+
+/* ============================================================
+   8. ХОД: показали задание → ответ вслух → учитель судит → исход
+   ============================================================ */
+
+function nextTask(){
+  if (gameOver) return;
+  if (queue.length){
+    current = queue.shift();
+  } else if (debts.length){
+    // очередь пуста — долги сами лезут в работу, деваться некуда
+    const t = debts[0];
+    debts.shift();
+    unmountDebt(t);
+    current = t;
+  } else {
+    current = null;
+    finish('clean');
+    return;
+  }
+  renderCard(true);
+  showHint(current, current.fails > 0);
+  updatePressure();
+  busy = false;
+  lockJudge(false);
+}
+
+function judge(ok){
+  if (busy || gameOver || !current) return;
+  busy = true;
+  lockJudge(true);
+  sndClick();
+
+  current.attempts++;
+  elCard.classList.add('revealed');   // правильный ответ раскрывается сразу
+
+  // обязательная секунда ожидания: ответ уже прозвучал, исход ещё нет
+  later(function(){
+    if (ok) resolveOk();
+    else resolveFail();
+  }, 850);
+}
+
+btnOk.addEventListener('click', function(){ judge(true); });
+btnNo.addEventListener('click', function(){ judge(false); });
+
+/* --- верно --- */
+function resolveOk(){
+  const t = current;
+  if (!t) return;
+  closed++;
+  if (t.fails === 0){
+    firstTry++;
+    closeFromQueue(t);
+  } else {
+    returned++;
+    tearDebt(t);
+  }
+}
+
+// обычное задание закрыто: улетает со щелчком
+function closeFromQueue(task){
+  const rect = elCard.getBoundingClientRect();
+  const html = elCard.outerHTML;
+  elCard.style.visibility = 'hidden';
+  const f = makeFlier(html, rect);
+  play(f, [
+    { transform:'translate(0,0) scale(1) rotate(0deg)', opacity:1 },
+    { transform:'translate(' + rnd(60,140) + 'px, -' + rnd(90,150) + 'px) scale(1.06) rotate(6deg)', opacity:1, offset:0.35 },
+    { transform:'translate(' + rnd(180,320) + 'px, -110vh) scale(.6) rotate(28deg)', opacity:0 }
+  ], 620, 'cubic-bezier(.55,.06,.68,.19)');
+  later(function(){ drop(f); }, 700);
+
+  sndOk();
+  burstAt(rect, 22, ['#95E061', '#FFD93D', '#4ECDC4'], 0.7);
+  current = null;
+  updatePressure();
+  later(afterResolve, 520);
+}
+
+/* --- ошибка: задание превращается в долг и падает на полку --- */
+function resolveFail(){
+  const task = current;
+  if (!task) return;
+  task.fails++;
+  const rect = elCard.getBoundingClientRect();
+  const html = elCard.outerHTML;
+  elCard.style.visibility = 'hidden';
+
+  // сначала вешаем настоящую карточку на полку (скрытой), чтобы узнать её место
+  debts.push(task);
+  const target = mountDebt(task);
+  target.style.visibility = 'hidden';
+  current = null;
+  updatePressure();
+
+  const dst = target.getBoundingClientRect();   // getBoundingClientRect форсирует раскладку
+  const f = makeFlier(html, rect);
+  const dx = dst.left - rect.left;
+  const dy = dst.top - rect.top;
+  const sc = rect.width ? dst.width / rect.width : 0.3;
+  play(f, [
+    { transform:'translate(0px,0px) scale(1) rotate(0deg)' },
+    { transform:'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ') rotate(' + task.rot.toFixed(2) + 'deg)' }
+  ], 520, 'cubic-bezier(.55,.06,.68,.19)');
+
+  // удар о стол
+  later(function(){
+    drop(f);
+    target.style.visibility = '';
+    target.classList.remove('slam');
+    void target.offsetWidth;
+    target.classList.add('slam');
+    // класс удара обязательно снимаем: иначе он перебьёт дрожь у долга ×3
+    later(function(){ target.classList.remove('slam'); }, 420);
+    elShelfW.classList.remove('bounce');
+    void elShelfW.offsetWidth;
+    elShelfW.classList.add('bounce');
+    later(function(){ elShelfW.classList.remove('bounce'); }, 500);
+    sndThud();
+    shake();
+    const r = target.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top, 16, ['#EFDCAB', '#FFF7DE', '#FF9F1C'], 0.5);
+    // подсказка появляется сразу — это ключ, чтобы долг вообще можно было закрыть.
+    // Даём её прочитать, прежде чем показать следующее задание.
+    showHint(task, true);
+    later(afterResolve, 1700);
+  }, 520);
+}
+
+// что делать после закрытия/падения
+function afterResolve(){
+  if (gameOver) return;
+  if (!queue.length && !debts.length){
+    finish('clean');
+  } else {
+    nextTask();
+  }
+}
+
+/* ============================================================
+   9. ДОЛГИ: взять с полки и порвать пополам
+   ============================================================ */
+
+function onDebtClick(task){
+  if (gameOver) return;
+  if (busy){ sndDeny(); return; }
+  const idx = debts.indexOf(task);
+  if (idx < 0) return;
+
+  busy = true;
+  lockJudge(true);
+  sndPick();
+
+  const from = task.el ? task.el.getBoundingClientRect() : null;
+  debts.splice(idx, 1);
+  unmountDebt(task);
+
+  // то, что было в работе, возвращаем на место
+  if (current){
+    if (current.fails > 0){
+      debts.push(current);
+      mountDebt(current);
+    } else {
+      queue.unshift(current);
+    }
+    current = null;
+  }
+
+  current = task;
+  renderCard(false);
+  showHint(task, true);
+  updatePressure();
+
+  const to = elCard.getBoundingClientRect();
+  const html = elCard.outerHTML;
+  if (from && to.width){
+    elCard.style.visibility = 'hidden';
+    const f = makeFlier(html, from);
+    const sc = to.width / from.width;
+    play(f, [
+      { transform:'translate(0px,0px) scale(1) rotate(0deg)', opacity:1 },
+      { transform:'translate(' + (to.left - from.left) + 'px,' + (to.top - from.top) + 'px) scale(' + sc + ') rotate(' + current.rot.toFixed(2) + 'deg)', opacity:1 }
+    ], 420, 'cubic-bezier(0.68,-0.55,0.265,1.55)');
+    later(function(){
+      drop(f);
+      renderCard(true);
+      busy = false;
+      lockJudge(false);
+    }, 430);
+  } else {
+    renderCard(true);
+    busy = false;
+    lockJudge(false);
+  }
+}
+
+// рвём карточку пополам: два клона с clip-path разлетаются с вращением
+const CLIP_LEFT  = 'polygon(0 0, 52% 0, 45% 12%, 55% 24%, 44% 36%, 56% 48%, 45% 60%, 55% 72%, 46% 84%, 53% 100%, 0 100%)';
+const CLIP_RIGHT = 'polygon(52% 0, 100% 0, 100% 100%, 53% 100%, 46% 84%, 55% 72%, 45% 60%, 56% 48%, 44% 36%, 55% 24%, 45% 12%)';
+
+function tearDebt(task){
+  const rect = elCard.getBoundingClientRect();
+  const html = elCard.outerHTML;
+  elCard.style.visibility = 'hidden';
+
+  const L = makeFlier(html, rect);
+  const R = makeFlier(html, rect);
+  L.style.clipPath = CLIP_LEFT;  L.style.webkitClipPath = CLIP_LEFT;
+  R.style.clipPath = CLIP_RIGHT; R.style.webkitClipPath = CLIP_RIGHT;
+
+  play(L, [
+    { transform:'translate(0,0) rotate(0deg)', opacity:1 },
+    { transform:'translate(-14vw, -6vh) rotate(-16deg)', opacity:1, offset:0.3 },
+    { transform:'translate(-46vw, 62vh) rotate(-72deg)', opacity:0 }
+  ], 950, 'cubic-bezier(.3,.5,.5,1)');
+  play(R, [
+    { transform:'translate(0,0) rotate(0deg)', opacity:1 },
+    { transform:'translate(14vw, -8vh) rotate(18deg)', opacity:1, offset:0.3 },
+    { transform:'translate(46vw, 66vh) rotate(78deg)', opacity:0 }
+  ], 950, 'cubic-bezier(.3,.5,.5,1)');
+  later(function(){ drop(L); drop(R); }, 1000);
+
+  sndRelief();
+  burstAt(rect, 46, ['#95E061', '#4ECDC4', '#FFDC5C', '#FFF7DE'], 1);
+
+  current = null;
+  updatePressure();
+
+  const last = !queue.length && !debts.length;
+  if (!last){
+    bigText('ЗАКРЫТО!', 'var(--green)');
+    later(afterResolve, 900);
+  } else {
+    later(afterResolve, 700);
+  }
+}
+
+/* ============================================================
+   10. ФИНАЛ И РЕСТАРТ
+   ============================================================ */
+
+function stubbornLine(){
+  let best = null;
+  for (let i = 0; i < allTasks.length; i++){
+    const t = allTasks[i];
+    if (t.attempts > 1 && (!best || t.attempts > best.attempts)) best = t;
+  }
+  if (!best) return null;
+  return esc(best.q.answer) + ' (' + best.attempts + ' ' + tryWord(best.attempts) + ')';
+}
+
+function finish(kind){
+  if (gameOver) return;
+  gameOver = true;
+  busy = true;
+  lockJudge(true);
+
+  if (kind === 'clean'){
+    // ПОЛКА РАСПАХИВАЕТСЯ И УЛЕТАЕТ
+    play(elShelfW, [
+      { transform:'translateY(0) rotate(0deg)', opacity:1 },
+      { transform:'translateY(-14px) rotate(-2deg)', opacity:1, offset:0.18 },
+      { transform:'translateY(130%) rotate(9deg)', opacity:0 }
+    ], 780, 'cubic-bezier(.55,.06,.68,.19)');
+    elFoot.style.opacity = '0';
+    later(function(){ elShelfW.style.visibility = 'hidden'; }, 780);
+
+    elCard.style.visibility = 'hidden';
+    bigText('СТОЛ ЧИСТ!', 'var(--gold)');
+    shake();
+    sndFanfare();
+
+    // салют
+    const colors = ['#FFD93D', '#FF3D8B', '#4ECDC4', '#95E061', '#FF9F1C', '#FFDC5C'];
+    burst(window.innerWidth / 2, window.innerHeight * 0.5, 60, colors, 1.3);
+    for (let i = 0; i < 5; i++){
+      later(function(){
+        burst(rnd(0.12, 0.88) * window.innerWidth, rnd(0.2, 0.7) * window.innerHeight, 26, colors, 1.1);
+      }, 260 + i * 230);
+    }
+    later(function(){ showModal('clean'); }, 1900);
+  } else {
+    sndClick();
+    showModal('giveup');
+  }
+}
+
+function showModal(kind){
+  let html = '';
+  if (kind === 'clean'){
+    const stub = stubbornLine();
+    html =
+      '<h2 class="mtitle">СТОЛ ЧИСТ!</h2>' +
+      '<div class="mline">Ни одной бумажки на полке.</div>' +
+      '<div class="mstats">' +
+        '<div class="mstat good"><span>Закрыл с первого раза</span><b>' + firstTry + '</b></div>' +
+        '<div class="mstat warm"><span>Пришлось возвращаться</span><b>' + returned + '</b></div>' +
+        (stub ? '<div class="mstat"><span>Самый упрямый долг</span><b>' + stub + '</b></div>' : '') +
+      '</div>' +
+      '<div class="mnote">' + (returned > 0
+        ? 'Ты не бросил ни одного.'
+        : 'Ни одного долга за партию — чисто с первого захода.') + '</div>' +
+      '<div class="mbtns"><button class="mbtn" id="againBtn" type="button">🔄 Ещё разок</button></div>';
+  } else {
+    const hang = hangingCount();
+    html =
+      '<h2 class="mtitle calm">НА СЕГОДНЯ ХВАТИТ</h2>' +
+      '<div class="mline">' + (hang > 0
+        ? 'Осталось ' + hang + ' ' + debtWord(hang) + '. Они подождут до следующего раза.'
+        : 'Долгов нет — задания подождут до следующего раза.') + '</div>' +
+      '<div class="mstats">' +
+        '<div class="mstat good"><span>Закрыто заданий</span><b>' + closed + ' / ' + TOTAL + '</b></div>' +
+        '<div class="mstat"><span>С первого раза</span><b>' + firstTry + '</b></div>' +
+      '</div>' +
+      '<div class="mbtns">' +
+        '<button class="mbtn" id="againBtn" type="button">🔄 Ещё разок</button>' +
+        '<button class="mbtn ghost" id="backBtn" type="button">← Вернуться к столу</button>' +
+      '</div>';
+  }
+  elMbox.innerHTML = html;
+  elModal.classList.remove('hidden');
+
+  const again = $('againBtn');
+  if (again) again.addEventListener('click', function(){ sndClick(); startGame(); });
+  const back = $('backBtn');
+  if (back) back.addEventListener('click', function(){
+    sndClick();
+    elModal.classList.add('hidden');
+    gameOver = false;
+    busy = false;
+    lockJudge(false);
+  });
+}
+
+// «Сдаться» — маленькая серая кнопка, финал без осуждения
+btnGive.addEventListener('click', function(){
+  if (gameOver) return;
+  if (busy){ sndDeny(); return; }
+  finish('giveup');
+});
+
+/* ============================================================
+   11. СТАРТ И ПОЛНЫЙ СБРОС
+   ============================================================ */
+
+function startGame(){
+  // гасим всё, что могло остаться от прошлой партии
+  clearTimers();
+  elFx.innerHTML = '';
+  elBig.classList.remove('show');
+  document.body.classList.remove('screen-shake');
+  elModal.classList.add('hidden');
+  elShelf.innerHTML = '';
+  elShelfW.style.visibility = '';
+  elShelfW.classList.remove('bounce');
+  elShelfW.style.transform = '';
+  elShelfW.style.opacity = '';
+  try{ elShelfW.getAnimations().forEach(function(a){ a.cancel(); }); }catch(e){}
+  elFoot.style.opacity = '';
+  elCard.style.visibility = '';
+
+  closed = 0; firstTry = 0; returned = 0;
+  current = null; busy = false; gameOver = false;
+
+  makeQueue();
+  updatePressure();
+
+  if (!queue.length){
+    // страховка на случай пустого банка заданий
+    elCard.className = 'task-card';
+    elCard.innerHTML = '<div class="tc-prompt">Список заданий пуст</div>' +
+      '<div class="tc-say">Добавь задания в QUESTIONS в начале файла.</div>';
+    lockJudge(true);
+    elHint.innerHTML = '&nbsp;';
+    return;
+  }
+  nextTask();
+}
+
+startGame();
+</script>
+</body>
+</html>

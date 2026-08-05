@@ -19,6 +19,8 @@
   --f-body:'Fredoka','Trebuchet MS',system-ui,sans-serif;
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+/* hidden должен побеждать display:flex у .stage/.verdict/.next-row */
+[hidden]{ display:none !important; }
 html,body{ overflow-x:hidden; max-width:100%; margin:0; padding:0; }
 body{
   min-height:100vh;
@@ -210,7 +212,18 @@ body::before{
   border:5px solid var(--ink); border-radius:16px; box-shadow:6px 6px 0 var(--ink);
   padding:4px 16px; transform:rotate(-1.5deg);
 }
-.bet-badge.b3{ background:var(--pink); color:#fff; }
+.bet-badge.b3{
+  background:var(--pink); color:#fff; font-size:1.6rem;
+  box-shadow:6px 6px 0 var(--ink), 0 0 24px rgba(255,61,139,.85);
+  text-shadow:2px 2px 0 rgba(0,0,0,.35);
+}
+/* ставка влетает с перелётом — нерв момента выбора */
+.bet-badge.pop{ animation:betPop .5s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes betPop{
+  0%{ transform:rotate(-1.5deg) scale(.25); opacity:0; }
+  60%{ transform:rotate(-1.5deg) scale(1.28); opacity:1; }
+  100%{ transform:rotate(-1.5deg) scale(1); opacity:1; }
+}
 .verdict{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
 .v-slot{ display:flex; }
 .v-slot.a{ transform:rotate(-1.5deg); }
@@ -274,6 +287,12 @@ body::before{
 .shout-layer{
   position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
   pointer-events:none; overflow:hidden;
+  background:radial-gradient(circle at 50% 50%, rgba(10,6,30,0), rgba(10,6,30,0) 70%);
+  transition:background .2s ease;
+}
+/* затемняем сцену, пока кричит надпись — иначе она сливается с панелью */
+.shout-layer.on{
+  background:radial-gradient(circle at 50% 50%, rgba(10,6,30,.62), rgba(10,6,30,0) 72%);
 }
 .shout{
   font-family:var(--f-head);
@@ -371,6 +390,9 @@ body::before{
    АДАПТИВ
    ================================================================ */
 @media (max-width:420px){
+  /* оставляем место под кнопку звука в углу */
+  .title{ font-size:clamp(2.3rem,9.6vw,4.6rem); }
+  .subtitle{ padding:0 46px; }
   .chip{ width:88px; min-height:92px; }
   .chip3{ width:112px; min-height:116px; }
   .chip .num{ font-size:2.1rem; }
@@ -390,7 +412,7 @@ body::before{
   .screen-shake,.screen-shake-soft{ animation:none !important; }
   .slot3{ animation:none !important; transform:rotate(-1.5deg); }
   .bar.near{ animation:none !important; box-shadow:6px 6px 0 var(--ink), 0 0 22px rgba(255,220,92,.9); }
-  .score.bump,.task-card.pop,.dot.fresh,.modal{ animation:none !important; }
+  .score.bump,.task-card.pop,.dot.fresh,.modal,.bet-badge.pop{ animation:none !important; }
   .suspense{ animation:none !important; opacity:1; }
   .shout{ transition:opacity .18s ease; transform:none; }
   .shout.show{ transform:none; }
@@ -485,7 +507,7 @@ body::before{
 
 <!-- СЛОИ ЭФФЕКТОВ -->
 <div class="flash" id="flash"></div>
-<div class="shout-layer"><div class="shout" id="shout"></div></div>
+<div class="shout-layer" id="shoutLayer"><div class="shout" id="shout"></div></div>
 
 <!-- ФИНАЛЬНАЯ МОДАЛКА -->
 <div class="modal-back" id="modalBack">
@@ -544,7 +566,7 @@ var current = null;     // текущее задание
 var bet = 0;            // текущая ставка
 var phase = 'bet';      // 'bet' | 'answer' | 'reveal' | 'result' | 'over'
 var busy = false;       // защита от двойного клика
-var history = [];       // [{bet:2, ok:true}, ...]
+var betLog = [];        // [{bet:2, ok:true}, ...] — имя не 'history': window.history перезаписать нельзя
 var timers = new Set(); // все активные таймеры — чистим при рестарте
 var particles = new Set(); // живые частицы — убираем при рестарте
 var scoreRaf = 0;       // id анимации счёта
@@ -561,7 +583,7 @@ var btnOk = $('btnOk'), btnNo = $('btnNo'), btnNext = $('btnNext'), nextRowEl = 
 var explainEl = $('explain'), explainVerdictEl = $('explainVerdict');
 var explainAnswerEl = $('explainAnswer'), explainHintEl = $('explainHint');
 var historyEl = $('history');
-var shoutEl = $('shout'), flashEl = $('flash');
+var shoutEl = $('shout'), shoutLayer = $('shoutLayer'), flashEl = $('flash');
 var modalBack = $('modalBack'), modalTitle = $('modalTitle'), modalSub = $('modalSub');
 var modalScore = $('modalScore'), modalStats = $('modalStats'), modalHistory = $('modalHistory');
 var btnAgain = $('btnAgain'), soundBtn = $('soundBtn');
@@ -680,8 +702,10 @@ function shout(text, size, color, ms){
   shoutEl.className = 'shout ' + size + ' ' + color;
   void shoutEl.offsetWidth;
   shoutEl.classList.add('show');
+  shoutLayer.classList.add('on');
   later(function(){
     shoutEl.classList.remove('show');
+    shoutLayer.classList.remove('on');
     later(function(){ if (!shoutEl.classList.contains('show')) shoutEl.textContent = ''; }, 260);
   }, ms || 1100);
 }
@@ -794,20 +818,20 @@ function updateProgress(){
 function renderHistory(target, fresh){
   var box = target || historyEl;
   box.innerHTML = '';
-  if (!history.length) {
+  if (!betLog.length) {
     var empty = document.createElement('span');
     empty.className = 'dot-empty';
     empty.textContent = 'Пока пусто — впереди ' + TOTAL_ROUNDS + ' раундов';
     box.appendChild(empty);
     return;
   }
-  for (var i = 0; i < history.length; i++) {
-    var h = history[i];
+  for (var i = 0; i < betLog.length; i++) {
+    var h = betLog[i];
     var dot = document.createElement('div');
     dot.className = 'dot ' + (h.ok ? 'win' : 'lose') + (h.bet === 3 ? ' b3' : '');
     dot.textContent = (h.ok ? '+' : '−') + h.bet;
     dot.title = 'Раунд ' + (i + 1) + ': ставка ' + h.bet + ', ' + (h.ok ? 'угадал' : 'мимо');
-    if (fresh && i === history.length - 1) dot.classList.add('fresh');
+    if (fresh && i === betLog.length - 1) dot.classList.add('fresh');
     box.appendChild(dot);
   }
 }
@@ -850,6 +874,7 @@ function startGame(){
   if (scoreRaf) { cancelAnimationFrame(scoreRaf); scoreRaf = 0; }
   document.body.classList.remove('screen-shake', 'screen-shake-soft');
   shoutEl.classList.remove('show');
+  shoutLayer.classList.remove('on');
   shoutEl.textContent = '';
   flashEl.classList.remove('on');
   modalBack.classList.remove('open');
@@ -858,7 +883,8 @@ function startGame(){
   round = 0;
   bet = 0;
   busy = false;
-  history = [];
+  phase = 'bet';   // снимаем 'over', иначе nextRound откажется стартовать
+  betLog = [];
   deck = [];
   lastPrompt = null;
   current = null;
@@ -917,14 +943,16 @@ function placeBet(n){
     var colors = n === 3 ? ['#FF3D8B', '#FFDC5C', '#ff6fae'] : (n === 2 ? ['#FFD93D', '#FF9F1C'] : ['#4ECDC4', '#95E061']);
     burst(box.left + box.width / 2, box.top + box.height / 2, n === 3 ? 22 : (n === 2 ? 12 : 7), colors, n === 3 ? 200 : 130);
   }
-  if (n === 3) { flash('gold'); shout('НА ВСЁ?', 'mid', 'gold', 700); }
+  if (n === 3) flash('gold');   // тройка — золотая вспышка, но экран не перекрываем
 
   stageBetEl.hidden = true;
   stageAnswerEl.hidden = false;
-  betBadgeEl.textContent = 'СТАВКА: ' + n;
+  betBadgeEl.textContent = n === 3 ? 'ВА-БАНК! СТАВКА 3' : ('СТАВКА: ' + n);
   betBadgeEl.className = 'bet-badge' + (n === 3 ? ' b3' : '');
+  void betBadgeEl.offsetWidth;  // перезапуск анимации влёта
+  betBadgeEl.classList.add('pop');
   answerHintEl.textContent = n === 3
-    ? 'ВА-БАНК! Скажи ответ вслух — назад дороги нет.'
+    ? 'Назад дороги нет. Скажи ответ вслух!'
     : 'Скажи ответ вслух! Учитель проверит.';
 
   later(function(){ busy = false; }, 260);
@@ -950,7 +978,7 @@ function resolve(ok){
 
   var before = score;
   score += ok ? bet : -bet;
-  history.push({ bet: bet, ok: ok });
+  betLog.push({ bet: bet, ok: ok });
 
   animateScore(before, score);
   updateProgress();
@@ -1022,16 +1050,23 @@ function feedback(ok, n){
 // ================================================================
 // 7. ФИНАЛ ПАРТИИ + СТАТИСТИКА РИСКА
 // ================================================================
+// Русские окончания: 1 раз, 2 раза, 5 раз, 11 раз, 22 раза
+function plural(n, one, few, many){
+  var d10 = n % 10, d100 = n % 100;
+  if (d10 === 1 && d100 !== 11) return one;
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return few;
+  return many;
+}
 function statsLine(){
   var maxBet = 0, threes = 0, threeWins = 0;
-  for (var i = 0; i < history.length; i++) {
-    var h = history[i];
+  for (var i = 0; i < betLog.length; i++) {
+    var h = betLog[i];
     if (h.bet > maxBet) maxBet = h.bet;
     if (h.bet === 3) { threes++; if (h.ok) threeWins++; }
   }
   var left = 'Самая смелая ставка: ' + (maxBet || '—');
   var right = threes
-    ? ('Угадал на тройке: ' + threeWins + ' раз' + (threeWins === 1 ? '' : 'а') + ' из ' + threes)
+    ? ('Угадал на тройке: ' + threeWins + ' ' + plural(threeWins, 'раз', 'раза', 'раз') + ' из ' + threes)
     : 'На тройку так и не решился';
   return left + ' · ' + right;
 }
