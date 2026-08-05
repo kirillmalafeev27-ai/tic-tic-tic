@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎪 Девять игр — немецкие глаголы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#1a1240; --bg-2:#2d1b69; --yellow:#FFD93D; --pink:#FF3D8B;
+  --cyan:#4ECDC4; --green:#95E061; --orange:#FF9F1C; --red:#FF4444;
+  --gold:#FFDC5C; --ink:#14102b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { overflow-x: hidden; }
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(255,61,139,.35), transparent 45%),
+    radial-gradient(circle at 88% 78%, rgba(78,205,196,.35), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,217,61,.10), transparent 60%),
+    linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
+  font-family: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+  color: #fff;
+  padding: 28px 16px 70px;
+  position: relative;
+}
+
+/* Halftone-точки поверх фона — комиксная «печать» */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none; z-index: 0;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* ---------- Шапка ---------- */
+.title {
+  font-family: 'Bangers', 'Impact', 'Haettenschweiler', system-ui, sans-serif;
+  font-size: clamp(2.4rem, 7vw, 4.6rem);
+  text-align: center; letter-spacing: 2px; line-height: 1.05;
+  background: linear-gradient(180deg, var(--yellow) 0%, var(--orange) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(4px 4px 0 var(--ink)) drop-shadow(0 0 18px rgba(255,217,61,.5));
+  transform: rotate(-2deg);
+  margin-bottom: 10px;
+}
+.sub {
+  text-align: center; color: var(--cyan); font-weight: 600;
+  font-size: clamp(.98rem, 2.4vw, 1.15rem); line-height: 1.6;
+  max-width: 640px; margin: 0 auto 8px;
+}
+.sub b { color: var(--yellow); }
+
+.rule {
+  max-width: 700px; margin: 22px auto 34px;
+  background: rgba(255,255,255,.07);
+  border: 3px dashed rgba(255,255,255,.28);
+  border-radius: 18px; padding: 14px 18px;
+  text-align: center; font-size: .96rem; line-height: 1.65; color: #d9d3f0;
+}
+.rule b { color: var(--yellow); }
+
+/* ---------- Сетка карточек ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  display: block; text-decoration: none; color: var(--ink);
+  background: var(--yellow);
+  border: 5px solid var(--ink); border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 20px 20px 18px;
+  position: relative; overflow: hidden;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.card:nth-child(odd)  { transform: rotate(-1.2deg); }
+.card:nth-child(even) { transform: rotate(1.2deg); }
+
+.card:hover {
+  transform: rotate(0deg) translate(-4px, -4px);
+  box-shadow: 11px 11px 0 var(--ink);
+}
+.card:active {
+  transform: rotate(0deg) translate(4px, 4px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* Цвета карточек */
+.card.c-pink   { background: var(--pink);   color: #fff; }
+.card.c-cyan   { background: var(--cyan); }
+.card.c-green  { background: var(--green); }
+.card.c-orange { background: var(--orange); }
+.card.c-gold   { background: var(--gold); }
+.card.c-red    { background: var(--red);    color: #fff; }
+.card.c-lilac  { background: #b39cf0; }
+.card.c-mint   { background: #9ce8c8; }
+
+.emoji {
+  font-size: 3.1rem; line-height: 1; display: block;
+  margin-bottom: 8px;
+  filter: drop-shadow(3px 3px 0 rgba(20,16,43,.28));
+}
+
+.name {
+  font-family: 'Bangers', 'Impact', 'Haettenschweiler', system-ui, sans-serif;
+  font-size: 1.85rem; letter-spacing: 1.6px; line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.hook { font-size: .97rem; font-weight: 600; line-height: 1.5; margin-bottom: 12px; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: rgba(20,16,43,.14);
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: .78rem; font-weight: 700;
+}
+.card.c-pink .chip, .card.c-red .chip { background: rgba(255,255,255,.2); }
+
+/* Номер игры — крупная «печать» в углу */
+.num {
+  position: absolute; top: -10px; right: 8px;
+  font-family: 'Bangers', 'Impact', system-ui, sans-serif;
+  font-size: 4.2rem; line-height: 1;
+  color: rgba(20,16,43,.13);
+  pointer-events: none;
+}
+
+/* ---------- Подвал ---------- */
+.foot {
+  margin-top: 40px;
+  background: #fff; color: var(--ink);
+  border: 5px solid var(--ink); border-radius: 22px;
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 24px 26px;
+}
+.foot h2 {
+  font-family: 'Bangers', 'Impact', system-ui, sans-serif;
+  font-size: 1.7rem; letter-spacing: 1.4px; margin-bottom: 10px;
+}
+.foot p { font-size: .97rem; line-height: 1.7; margin-bottom: 10px; }
+.foot code {
+  background: #f0ecfa; border: 2px solid #d9d0f0; border-radius: 6px;
+  padding: 1px 7px; font-size: .9rem; font-weight: 700;
+}
+.foot ul { margin: 8px 0 10px 20px; font-size: .95rem; line-height: 1.75; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .card:hover, .card:active { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <h1 class="title">Девять игр<br>про одни и те же глаголы</h1>
+  <p class="sub">
+    Немецкое спряжение · <b>Один HTML-файл каждая</b> · Открывается двойным кликом, интернет не нужен
+  </p>
+
+  <div class="rule">
+    Правило у всех девяти одно: <b>ребёнок отвечает раньше, чем узнаёт исход.</b><br>
+    Меняется только то, откуда берётся неизвестность — из случая, из времени, из
+    собственной уверенности или из соседа по парте.
+  </div>
+
+  <div class="grid">
+
+    <a class="card c-pink" href="va-bank.html">
+      <span class="num">1</span>
+      <span class="emoji">🎯</span>
+      <div class="name">Ва-банк</div>
+      <div class="hook">Видишь задание — и сам решаешь, сколько поставить. Случая нет вообще: страшно ровно настолько, насколько ты честен с собой.</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">8 раундов</span><span class="chip">риск</span></div>
+    </a>
+
+    <a class="card c-orange" href="bashnya-zhadnosti.html">
+      <span class="num">2</span>
+      <span class="emoji">🏗️</span>
+      <div class="name">Башня жадности</div>
+      <div class="hook">1 → 2 → 4 → 8 → 16. Забрать или ещё разок? Ошибка сжигает всё дотла. Класс орёт «ЕЩЁ!», башня качается.</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">шумно</span><span class="chip">жадность</span></div>
+    </a>
+
+    <a class="card c-red" href="pogonya.html">
+      <span class="num">3</span>
+      <span class="emoji">👹</span>
+      <div class="name">Погоня</div>
+      <div class="hook">Монстр шагает после каждого твоего хода на сколько захочет. Не вспышка, а медленно нарастающий ужас: видно, что он ближе.</div>
+      <div class="meta"><span class="chip">весь класс</span><span class="chip">общий враг</span><span class="chip">ужас</span></div>
+    </a>
+
+    <a class="card c-mint" href="proyavlenie.html">
+      <span class="num">4</span>
+      <span class="emoji">🖼️</span>
+      <div class="name">Проявление</div>
+      <div class="hook">Под плитками картинка. Каждый верный ответ убирает одну. Крикнешь догадку рано — куш, ошибёшься — вернутся две. Тихая игра.</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">тихо</span><span class="chip">тайна</span></div>
+    </a>
+
+    <a class="card c-lilac" href="kot-v-meshke.html">
+      <span class="num">5</span>
+      <span class="emoji">🎒</span>
+      <div class="name">Кот в мешке</div>
+      <div class="hook">Ставишь ДО того, как увидел вопрос. Мешок развязывается — а там зверское задание на тройном множителе. «Ну зачем я поставил пять».</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">8 раундов</span><span class="chip">вслепую</span></div>
+    </a>
+
+    <a class="card c-cyan" href="dolgi.html">
+      <span class="num">6</span>
+      <span class="emoji">📋</span>
+      <div class="name">Долги</div>
+      <div class="hook">Ошибся — не потерял очко, а получил долг. Он висит на виду и душит место на экране. Победа — это когда стол наконец чист.</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">дожать тему</span><span class="chip">облегчение</span></div>
+    </a>
+
+    <a class="card c-gold" href="tron.html">
+      <span class="num">7</span>
+      <span class="emoji">👑</span>
+      <div class="name">Трон</div>
+      <div class="hook">Ответил верно — забираешь чужое место в таблице, а он встаёт на твоё. Первое место горит весь урок, и все смотрят наверх.</div>
+      <div class="meta"><span class="chip">2–6 игроков</span><span class="chip">друг против друга</span></div>
+    </a>
+
+    <a class="card c-green" href="nasledstvo.html">
+      <span class="num">8</span>
+      <span class="emoji">🧭</span>
+      <div class="name">Наследство</div>
+      <div class="hook">Единственная, что усиливается от повторения. Итог урока переносится на следующий: фора или долг, коллекция предметов, серия побед.</div>
+      <div class="meta"><span class="chip">1 игрок</span><span class="chip">между уроками</span><span class="chip">копится</span></div>
+    </a>
+
+    <a class="card c-yellow" href="goryachaya-bomba.html">
+      <span class="num">9</span>
+      <span class="emoji">💣</span>
+      <div class="name">Горячая бомба</div>
+      <div class="hook">Фитиль тикает, сколько осталось — неизвестно. Ответил — скинул соседу. Ошибся — бомба осталась у тебя и затикала быстрее.</div>
+      <div class="meta"><span class="chip">1–6 игроков</span><span class="chip">3 минуты</span><span class="chip">время</span></div>
+    </a>
+
+  </div>
+
+  <div class="foot">
+    <h2>Как поменять тему</h2>
+    <p>
+      Во всех девяти файлах задания лежат в одном и том же месте: массив
+      <code>QUESTIONS</code> в самом начале <code>&lt;script&gt;</code>. Формат
+      простой — <code>prompt</code> (что показать), <code>answer</code> (правильный
+      ответ, для учителя), <code>hint</code> (правило, которое всплывает после ошибки).
+    </p>
+    <p>
+      Замени список — и та же игра работает на неправильных глаголах английского,
+      таблице умножения, падежах, столицах, чём угодно. Механику трогать не нужно.
+      Игры не ломаются, если заданий 8 или 40.
+    </p>
+    <h2 style="margin-top:18px">Пара мелочей</h2>
+    <ul>
+      <li>Кнопка <b>🔊 / 🔇</b> есть в каждой игре, состояние запоминается.</li>
+      <li>Проверяет ответ <b>учитель</b> — кнопки ✅ / ❌. Ребёнок отвечает вслух, это принципиально.</li>
+      <li>Файлы полностью автономны: можно кинуть в мессенджер, положить на флешку, открыть без интернета.</li>
+      <li>Если в системе включено «уменьшить движение», тряска и разлёт частиц выключаются сами.</li>
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>
