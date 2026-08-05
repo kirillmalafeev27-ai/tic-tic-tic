@@ -21,7 +21,7 @@
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 /* hidden должен побеждать display:flex у .stage/.verdict/.next-row */
 [hidden]{ display:none !important; }
-html,body{ overflow-x:hidden; max-width:100%; margin:0; padding:0; }
+html,body{ overflow-x:hidden;overflow-x:clip; max-width:100%; margin:0; padding:0; }
 body{
   min-height:100vh;
   font-family:var(--f-body);
